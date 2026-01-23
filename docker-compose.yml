@@ -1,0 +1,25 @@
+services:
+  postgres-scraper:
+    image: postgres:15-alpine
+    container_name: postgres-scraper
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: scraping_db
+      POSTGRES_USER: scraper
+      POSTGRES_PASSWORD: scraper
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_scraper_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scraper -d scraping_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_scraper_data:
