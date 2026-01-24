@@ -139,6 +139,15 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                 except Exception:
                     # fallback to regex if transformer fails
                     is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
+            elif method == "embeddings":
+                try:
+                    # use sentence-transformers embeddings classifier
+                    res = await ClassifierService.embeddings(title, abstract, subjects, threshold=0.58)
+                    is_ia = bool(res.get('es_ia'))
+                    print(f"Embeddings result: {res}")
+                except Exception:
+                    # fallback to regex if embeddings fails
+                    is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
             else:
                 is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
 

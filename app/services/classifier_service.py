@@ -8,6 +8,18 @@ import unicodedata
 from typing import Optional
 
 from app.services.ia_utils import IA_REGEX
+from sentence_transformers import SentenceTransformer, util
+import torch
+
+# Embeddings description used to represent the "IA" concept
+_AI_DESCRIPTION = (
+    "tesis o artículo académico sobre inteligencia artificial, "
+    "machine learning, aprendizaje automático, deep learning, "
+    "aprendizaje profundo, redes neuronales, redes convolucionales, "
+    "visión por computadora, procesamiento de lenguaje natural, "
+    "PLN, NLP, modelos generativos, transformers, LLM, "
+    "TensorFlow, PyTorch, clasificación de imágenes o videos con IA"
+)
 
 
 class ClassifierService:
@@ -17,6 +29,8 @@ class ClassifierService:
     """
 
     _hf_pipeline = None
+    _emb_model = None
+    _ai_embedding = None
 
     @classmethod
     async def transformers_zero_shot(cls, text: str) -> Dict[str, Any]:
@@ -113,3 +127,27 @@ class ClassifierService:
             return {"sequence": text, "labels": ["inteligencia artificial", "no relacionado con IA"], "scores": [0.99, 0.01]}
         else:
             return {"sequence": text, "labels": ["inteligencia artificial", "no relacionado con IA"], "scores": [0.01, 0.99]}
+
+    @classmethod
+    async def embeddings(cls, title: str, abstract: str, subjects: list[str], threshold: float = 0.58) -> Dict[str, Any]:
+        """Classify using sentence-transformers embeddings.
+
+        Loads the model lazily in a background thread and returns a dict with
+        `similitud` (float) and `es_ia` (bool).
+        """
+        def _init_and_encode(titulo: str, abstract_text: str, subjects_list: list[str], thr: float):
+            if cls._emb_model is None:
+                device = 'cuda' if torch.cuda.is_available() else 'cpu'
+                cls._emb_model = SentenceTransformer('BAAI/bge-m3', device=device)
+                cls._ai_embedding = cls._emb_model.encode(_AI_DESCRIPTION, normalize_embeddings=True)
+
+            texto = f"{titulo} {abstract_text} {' '.join(subjects_list)}".strip()
+            if not texto:
+                return {"similitud": 0.0, "es_ia": False, "texto": texto}
+
+            texto_emb = cls._emb_model.encode(texto, normalize_embeddings=True)
+            similitud = util.cos_sim(cls._ai_embedding, texto_emb).item()
+            return {"similitud": round(similitud, 4), "es_ia": similitud >= thr, "texto": texto[:150] + "..."}
+
+        result = await asyncio.to_thread(_init_and_encode, title, abstract or "", subjects or [], threshold)
+        return result
