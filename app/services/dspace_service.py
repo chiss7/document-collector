@@ -1,5 +1,5 @@
 import requests
-import re
+import unicodedata
 import asyncio
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,30 +11,15 @@ from app.repositories.publication_repository import PublicationRepository
 from app.repositories.excluded_publication_repository import ExcludedPublicationRepository
 from app.models.contributor import Contributor, ContributorRole
 from app.db.session import AsyncSessionLocal
+from app.services.classifier_service import ClassifierService
+from app.services.ia_utils import IA_REGEX
 
-# Keywords para filtrar IA (case-insensitive, español/inglés).
-# Use word boundaries for short tokens to avoid matching substrings (e.g. 'ia' inside other words).
-IA_KEYWORDS = [
-    r'\binteligencia artificial\b',
-    r'\bartificial intelligence\b',
-    r'\bmachine learning\b',
-    r'\baprendizaje autom[aá]tico\b',
-    r'\bdeep learning\b',
-    r'\baprendizaje profundo\b',
-    r'\bred neuronal\b',
-    r'\bredes neuronales\b',
-    r'\bneural network\b',
-    # match the abbreviations AI / IA as whole words only
-    r'\bAI\b',
-    r'\bIA\b',
-]
-IA_REGEX = re.compile('|'.join(IA_KEYWORDS), re.IGNORECASE)
-
-async def fetch_and_save_ia_publications(session: AsyncSession | None = None):
+async def fetch_and_save_ia_publications(session: AsyncSession | None = None, classifier_method: str = "regex"):
     """Fetch and save IA publications.
 
     If `session` is not provided, create a fresh `AsyncSession` for this run.
     """
+    print("fetch_and_save_ia_publications: started")
     own_session = session is None
     if own_session:
         async with AsyncSessionLocal() as session:
@@ -107,6 +92,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None):
                     pass
 
             abstract = _extract_spanish_abstract(item)
+            abstract = normalize_text(abstract)
 
             accessioned_vals = _extract_metadata_values('dc.date.accessioned', metadata, item)
             available_vals = _extract_metadata_values('dc.date.available', metadata, item)
@@ -122,7 +108,45 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None):
             entity_type = first_meta('dspace.entity.type', metadata, item)
 
             # Classify: items about IA -> Publication; others -> ExcludedPublication
-            if is_about_ia(item):
+            # Build texts used for classification: include Title, Subjects and Abstract
+            title = item.get('name', '') or ''
+            # `abstract` and `subjects` (list) were already computed above; reuse them
+            subjects_text = ' '.join(subjects)
+            text_for_title_abstract = f"Title: {title}\nSubjects: {subjects_text}\nAbstract: {abstract}"
+
+            is_ia = False
+            method = (classifier_method or "regex").lower()
+            if method == "transformers":
+                try:
+                    # prepare text: normalize + lemmatize abstract, include title and subjects
+                    prepared = await ClassifierService.prepare_text_for_transformer(title, subjects_text, abstract)
+                    res = await ClassifierService.transformers_zero_shot(prepared)
+                    labels = res.get('labels', []) if isinstance(res, dict) else []
+                    scores = res.get('scores', []) if isinstance(res, dict) else []
+                    print(f"Transformer labels: {labels}, scores: {scores}, text: {prepared[:400]}...")
+                    # Candidate labels updated to longer, descriptive Spanish strings.
+                    if labels and scores:
+                        positive_label = (
+                            "el artículo discute inteligencia artificial, machine learning, deep learning, redes neuronales, aprendizaje automático o algoritmos de ia"
+                        )
+                        # find index of positive label (case-insensitive)
+                        idx = next(
+                            (i for i, l in enumerate(labels) if isinstance(l, str) and l.lower() == positive_label),
+                            None,
+                        )
+                        if idx is not None and idx < len(scores) and scores[idx] >= 0.65:
+                            is_ia = True
+                except Exception:
+                    # fallback to regex if transformer fails
+                    is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
+            else:
+                is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
+
+            if is_about_ia(item) and not is_ia:
+                # Keep backward-compatibility: if original regex matched, treat as IA
+                is_ia = True
+
+            if is_ia:
                 publication = Publication(
                     title=item.get('name', ''),
                     uuid=uuid_val,
@@ -183,7 +207,6 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None):
             print(f"About to save {len(excluded_to_save)} excluded publications")
             try:
                 inserted_exc_urls = await asyncio.wait_for(ExcludedPublicationRepository.saveAll(session, excluded_to_save), timeout=60)
-                print(f"Excluded save returned: {inserted_exc_urls}")
                 if inserted_exc_urls:
                     existing_exc_urls.update(inserted_exc_urls)
                     print(f"Inserted excluded urls: {len(inserted_exc_urls)}")
@@ -213,6 +236,7 @@ def is_about_ia(item: dict) -> bool:
     """
     title = item.get('name', '') or ''
     abstract = _extract_spanish_abstract(item) or ''
+    abstract = normalize_text(abstract)
     subjects_list = _extract_metadata_values('dc.subject', item.get('metadata', {}) or {}, item)
     subjects = ' '.join(subjects_list)
 
@@ -293,3 +317,9 @@ def first_meta(key: str, metadata: dict | None = None, item: dict | None = None)
         metadata = (item.get('metadata', {}) if isinstance(item, dict) else {}) or {}
     vals = _extract_metadata_values(key, metadata, item or {})
     return vals[0] if vals else None
+
+
+def normalize_text(text):
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    return text.lower()

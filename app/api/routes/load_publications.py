@@ -12,12 +12,15 @@ from app.models.excluded_publication import ExcludedPublication
 router = APIRouter(prefix="/load", tags=["Load Publications"])
 
 
-async def run_fetch_and_save():
+async def run_fetch_and_save(payload: Optional[dict] = None):
   async with AsyncSessionLocal() as session:
     # Begin an explicit transaction for the whole run so commits are
     # applied at the end and visible to other sessions.
+    method = None
+    if isinstance(payload, dict):
+      method = (payload.get("method") or payload.get("classifier_method") or "regex").lower()
     async with session.begin():
-      return await fetch_and_save_ia_publications(session)
+      return await fetch_and_save_ia_publications(session, classifier_method=method or "regex")
 
 
 @router.post("")
@@ -30,12 +33,12 @@ async def start_loading(payload: Optional[dict] = None, background: bool = False
       returns `{"status": "ok", "saved": N}` or raises HTTP 500 on error.
     """
     if background:
-        # schedule in current event loop
-        asyncio.create_task(run_fetch_and_save())
-        return {"status": "Loading publications started in background"}
+      # schedule in current event loop, pass payload so caller can set classifier
+      asyncio.create_task(run_fetch_and_save(payload))
+      return {"status": "Loading publications started in background"}
 
     try:
-        saved = await run_fetch_and_save()
+        saved = await run_fetch_and_save(payload)
         return {"status": "ok", "saved": saved}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
