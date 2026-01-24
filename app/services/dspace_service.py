@@ -76,7 +76,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
 
             authors = _extract_metadata_values('dc.contributor.author', metadata, item)
             advisors = _extract_metadata_values('dc.contributor.advisor', metadata, item)
-            subjects = _extract_metadata_values('dc.subject', metadata, item)
+            subjects = _extract_metadata_values('dc.subject', metadata, item) or _extract_metadata_values('dc.subject.proposal', metadata, item)
 
             # Fechas: issued (publicación), accessioned, available
             issued_vals = _extract_metadata_values('dc.date.issued', metadata, item)
@@ -138,6 +138,15 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                             is_ia = True
                 except Exception:
                     # fallback to regex if transformer fails
+                    is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
+            elif method == "embeddings":
+                try:
+                    # use sentence-transformers embeddings classifier
+                    res = await ClassifierService.embeddings(title, abstract, subjects, threshold=0.58)
+                    is_ia = bool(res.get('es_ia'))
+                    print(f"Embeddings result: {res}")
+                except Exception:
+                    # fallback to regex if embeddings fails
                     is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
             else:
                 is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
