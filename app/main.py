@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 scheduler = AsyncIOScheduler()
 
-method_dict = {"method": "regex"}
+method_dict = {"method": "embeddings"}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

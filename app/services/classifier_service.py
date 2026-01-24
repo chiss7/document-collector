@@ -17,7 +17,7 @@ _AI_DESCRIPTION = (
     "machine learning, aprendizaje automático, deep learning, "
     "aprendizaje profundo, redes neuronales, redes convolucionales, "
     "visión por computadora, procesamiento de lenguaje natural, "
-    "PLN, NLP, modelos generativos, transformers, LLM, "
+    "PLN, NLP, modelos generativos, transformers, LLM, modelos predictivos, "
     "TensorFlow, PyTorch, clasificación de imágenes o videos con IA"
 )
 
