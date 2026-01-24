@@ -76,7 +76,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
 
             authors = _extract_metadata_values('dc.contributor.author', metadata, item)
             advisors = _extract_metadata_values('dc.contributor.advisor', metadata, item)
-            subjects = _extract_metadata_values('dc.subject', metadata, item)
+            subjects = _extract_metadata_values('dc.subject', metadata, item) or _extract_metadata_values('dc.subject.proposal', metadata, item)
 
             # Fechas: issued (publicación), accessioned, available
             issued_vals = _extract_metadata_values('dc.date.issued', metadata, item)
