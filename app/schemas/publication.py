@@ -26,7 +26,9 @@ class PublicationDTO(BaseModel):
     id: Optional[int]
     title: str
     abstract: Optional[str] = None
+    original_abstract: Optional[str] = None
     source_url: Optional[str] = None
+    pdf_url: Optional[str] = None
     uuid: Optional[str] = None
     published_date: Optional[date] = None
     accessioned_date: Optional[datetime] = None

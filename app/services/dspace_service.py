@@ -91,8 +91,8 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                 except ValueError:
                     pass
 
-            abstract = _extract_spanish_abstract(item)
-            abstract = normalize_text(abstract)
+            original_abstract = _extract_spanish_abstract(item)
+            abstract = normalize_text(original_abstract)
 
             accessioned_vals = _extract_metadata_values('dc.date.accessioned', metadata, item)
             available_vals = _extract_metadata_values('dc.date.available', metadata, item)
@@ -141,25 +141,27 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                     is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
             elif method == "embeddings":
                 try:
-                    # use sentence-transformers embeddings classifier
-                    res = await ClassifierService.embeddings(title, abstract, subjects, threshold=0.58)
+                    # use sentence-transformers embeddings classifier, threshold .52
+                    res = await ClassifierService.embeddings(title, original_abstract, subjects, threshold=0.83)
                     is_ia = bool(res.get('es_ia'))
                     print(f"Embeddings result: {res}")
                 except Exception:
                     # fallback to regex if embeddings fails
+                    print("Embeddings classification failed, falling back to regex")
                     is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
             else:
                 is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
 
-            if is_about_ia(item) and not is_ia:
+            #if is_about_ia(item) and not is_ia:
                 # Keep backward-compatibility: if original regex matched, treat as IA
-                is_ia = True
+                #is_ia = True
 
             if is_ia:
                 publication = Publication(
                     title=item.get('name', ''),
                     uuid=uuid_val,
                     abstract=abstract,
+                    original_abstract=original_abstract,
                     source_url=source_url,
                     published_date=published_date,
                     accessioned_date=accessioned_date,
@@ -232,6 +234,14 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
             break
         page += 1
         await asyncio.sleep(1)  # Delay para no sobrecargar el servidor
+
+    # After all initial publications have been persisted, try to fetch and
+    # attach PDF final URLs for saved items.
+    try:
+        updated_map = await fetch_and_attach_pdf_urls(session)
+        print(f"Attached pdf urls to {len(updated_map)} publications")
+    except Exception as e:
+        print(f"Error attaching pdf urls: {e}")
 
     print(f"Total IA publications saved: {total_saved}")
     return total_saved
@@ -332,3 +342,102 @@ def normalize_text(text):
     text = unicodedata.normalize("NFKD", text)
     text = text.encode("ascii", "ignore").decode("ascii")
     return text.lower()
+
+
+async def fetch_and_attach_pdf_urls(session: AsyncSession | None = None, limit: int | None = None):
+    """Fetch the bitstreams href for saved publications and attach it to `pdf_url`.
+
+    - If `session` is None, a temporary session is created.
+    - `limit` can be used to restrict the number of publications processed.
+    Returns a dict mapping publication id -> found href (only for updated items).
+    """
+    print("fetch_and_attach_pdf_urls: started")
+    own_session = session is None
+    if own_session:
+        async with AsyncSessionLocal() as session:
+            print("fetch_and_attach_pdf_urls: started (created session)")
+            return await fetch_and_attach_pdf_urls(session, limit)
+
+    # load publications (optionally limited)
+    pubs = await PublicationRepository.findAll(session, limit=limit)
+    updated = []
+
+    for pub in pubs:
+        uuid_val = getattr(pub, "uuid", None)
+        if not uuid_val:
+            continue
+
+        # skip if already has pdf_url
+        if getattr(pub, "pdf_url", None):
+            continue
+
+        bundles_url = f"https://www.dspace.uce.edu.ec/server/api/core/items/{uuid_val}/bundles"
+
+        try:
+            net_call = asyncio.to_thread(requests.get, bundles_url, timeout=10)
+            try:
+                response = await asyncio.wait_for(net_call, timeout=20)
+            except asyncio.TimeoutError:
+                print(f"Timeout fetching bundles for uuid {uuid_val}")
+                continue
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            print(f"Error fetching bundles for uuid {uuid_val}: {e}")
+            continue
+
+        bundles = data.get("_embedded", {}).get("bundles", []) or []
+        original = next((b for b in bundles if b.get("name") == "ORIGINAL"), None)
+        if not original:
+            # no ORIGINAL bundle found
+            continue
+
+        # first-level href to bitstreams collection
+        bitstreams_href = original.get("_links", {}).get("bitstreams", {}).get("href")
+        if not bitstreams_href:
+            continue
+
+        try:
+            net_call2 = asyncio.to_thread(requests.get, bitstreams_href, timeout=10)
+            try:
+                resp2 = await asyncio.wait_for(net_call2, timeout=20)
+            except asyncio.TimeoutError:
+                print(f"Timeout fetching bitstreams for uuid {uuid_val}")
+                continue
+            resp2.raise_for_status()
+            data2 = resp2.json()
+        except Exception as e:
+            print(f"Error fetching bitstreams for uuid {uuid_val}: {e}")
+            continue
+
+        bitstreams = data2.get("_embedded", {}).get("bitstreams", []) or []
+        # find bitstream object whose bundleName is ORIGINAL
+        bs = next((b for b in bitstreams if b.get("bundleName") == "ORIGINAL"), None)
+        if not bs:
+            continue
+
+        final_href = bs.get("_links", {}).get("content", {}).get("href")
+        if final_href:
+            pub.pdf_url = final_href
+            updated.append(pub)
+
+    if updated:
+        try:
+            started_tx = False
+            if not session.in_transaction():
+                started_tx = True
+                async with session.begin():
+                    for p in updated:
+                        session.add(p)
+            else:
+                for p in updated:
+                    session.add(p)
+                try:
+                    await session.flush()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"Error saving pdf_url updates: {e}")
+
+    print(f"fetch_and_attach_pdf_urls: updated {len(updated)} publications")
+    return {p.id: p.pdf_url for p in updated}

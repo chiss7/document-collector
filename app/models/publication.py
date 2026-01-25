@@ -42,6 +42,8 @@ class Publication(Base):
     publisher: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     rights: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     rights_uri: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    original_abstract: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    pdf_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     entity_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 

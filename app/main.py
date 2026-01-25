@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.api.routes import load_publications, publications
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 
 scheduler = AsyncIOScheduler()
@@ -34,3 +35,11 @@ app = FastAPI(
 
 app.include_router(load_publications.router)
 app.include_router(publications.router)
+
+# CORS Middleware
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=['http://localhost:5173'],
+  allow_methods=['*'],
+  allow_headers=['*'],
+)

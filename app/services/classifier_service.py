@@ -13,12 +13,15 @@ import torch
 
 # Embeddings description used to represent the "IA" concept
 _AI_DESCRIPTION = (
-    "tesis o artículo académico sobre inteligencia artificial, "
+    "cualquier tesis, artículo o publicación que mencione, discuta, analice, aplique o haga referencia a "
+    "inteligencia artificial, IA, artificial intelligence, AI, minería de datos, data mining, "
     "machine learning, aprendizaje automático, deep learning, "
-    "aprendizaje profundo, redes neuronales, redes convolucionales, "
-    "visión por computadora, procesamiento de lenguaje natural, "
-    "PLN, NLP, modelos generativos, transformers, LLM, modelos predictivos, "
-    "TensorFlow, PyTorch, clasificación de imágenes o videos con IA"
+    "aprendizaje profundo, redes neuronales, redes convolucionales, CNN, "
+    "visión por computadora, computer vision, visión artificial, "
+    "detección de objetos, detección de anomalías, reconocimiento de patrones en imágenes o videos, "
+    "procesamiento de lenguaje natural, PLN, NLP, modelos generativos, transformers, LLM, ChatGPT, "
+    "modelos predictivos, clasificación de imágenes o videos con IA, clasificación de sentimientos, modelos preentrenados, "
+    "TensorFlow, PyTorch, Keras, OpenCV combinado con modelos de deep learning"
 )
 
 
@@ -128,8 +131,11 @@ class ClassifierService:
         else:
             return {"sequence": text, "labels": ["inteligencia artificial", "no relacionado con IA"], "scores": [0.01, 0.99]}
 
+
+    # BAAI/bge-m3, nomic-ai/nomic-embed-text-v1.5, 
+    # BEST MODEL: intfloat/multilingual-e5-large with .83 threshold
     @classmethod
-    async def embeddings(cls, title: str, abstract: str, subjects: list[str], threshold: float = 0.58) -> Dict[str, Any]:
+    async def embeddings(cls, title: str, abstract: str, subjects: list[str], threshold: float = 0.55) -> Dict[str, Any]:
         """Classify using sentence-transformers embeddings.
 
         Loads the model lazily in a background thread and returns a dict with
@@ -138,7 +144,7 @@ class ClassifierService:
         def _init_and_encode(titulo: str, abstract_text: str, subjects_list: list[str], thr: float):
             if cls._emb_model is None:
                 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-                cls._emb_model = SentenceTransformer('BAAI/bge-m3', device=device)
+                cls._emb_model = SentenceTransformer('intfloat/multilingual-e5-large', device=device)
                 cls._ai_embedding = cls._emb_model.encode(_AI_DESCRIPTION, normalize_embeddings=True)
 
             texto = f"{titulo} {abstract_text} {' '.join(subjects_list)}".strip()
