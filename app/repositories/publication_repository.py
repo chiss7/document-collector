@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -426,3 +426,12 @@ class PublicationRepository:
         items = result.scalars().all()
 
         return {"items": items, "total": total, "page": page, "size": size}
+
+    @staticmethod
+    async def uuids_in(session: AsyncSession, uuids: list[str]) -> Set[str]:
+        """Return set of `uuid` values from Publication that are present in `uuids`."""
+        if not uuids:
+            return set()
+        stmt = select(Publication.uuid).where(Publication.uuid.in_(uuids))
+        res = await session.execute(stmt)
+        return set(res.scalars().all())
