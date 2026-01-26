@@ -23,7 +23,7 @@ class Publication(Base):
 
     abstract: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    source_url: Mapped[str] = mapped_column(String(1000), unique=True)
+    source_url: Mapped[str] = mapped_column(String(1000), unique=True, nullable=True)
 
     published_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     accessioned_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -185,6 +185,89 @@ class PublicationRepository:
         return total_inserted
 
     @staticmethod
+    async def save(session: AsyncSession, publication: Publication) -> int:
+        """Save a single Publication instance and return its id.
+
+        - Handles creating any missing Subject rows referenced via
+          a transient `_subject_names` attribute on `publication`.
+        - If a unique constraint on `source_url` prevents insertion, tries
+          to return the existing publication id instead of raising.
+        """
+        if not publication:
+            raise TypeError("publication is required")
+
+        started_tx = False
+        try:
+            if not session.in_transaction():
+                started_tx = True
+                async with session.begin():
+                    names = getattr(publication, "_subject_names", []) or []
+                    if names:
+                        stmt = select(Subject).where(Subject.name.in_(list(names)))
+                        res = await session.execute(stmt)
+                        existing_subjects = {s.name: s for s in res.scalars().all()}
+
+                        missing = [n for n in names if n not in existing_subjects]
+                        new_subjects = [Subject(name=n) for n in missing]
+                        if new_subjects:
+                            session.add_all(new_subjects)
+                            try:
+                                await session.flush()
+                            except Exception:
+                                await session.rollback()
+                        # rebuild mapping
+                        stmt = select(Subject).where(Subject.name.in_(list(names)))
+                        res = await session.execute(stmt)
+                        subject_map = {s.name: s for s in res.scalars().all()}
+                        publication.subjects = [subject_map[n] for n in names if n in subject_map]
+                        if hasattr(publication, "_subject_names"):
+                            delattr(publication, "_subject_names")
+
+                    session.add(publication)
+            else:
+                names = getattr(publication, "_subject_names", []) or []
+                if names:
+                    stmt = select(Subject).where(Subject.name.in_(list(names)))
+                    res = await session.execute(stmt)
+                    existing_subjects = {s.name: s for s in res.scalars().all()}
+
+                    missing = [n for n in names if n not in existing_subjects]
+                    new_subjects = [Subject(name=n) for n in missing]
+                    if new_subjects:
+                        session.add_all(new_subjects)
+                        try:
+                            await session.flush()
+                        except Exception:
+                            await session.rollback()
+
+                    stmt = select(Subject).where(Subject.name.in_(list(names)))
+                    res = await session.execute(stmt)
+                    subject_map = {s.name: s for s in res.scalars().all()}
+                    publication.subjects = [subject_map[n] for n in names if n in subject_map]
+                    if hasattr(publication, "_subject_names"):
+                        delattr(publication, "_subject_names")
+
+                session.add(publication)
+                try:
+                    await session.flush()
+                except IntegrityError:
+                    raise
+
+        except IntegrityError:
+            # likely duplicate source_url; try to return existing id
+            try:
+                stmt = select(Publication).where(Publication.source_url == publication.source_url)
+                res = await session.execute(stmt)
+                existing = res.scalar_one_or_none()
+                if existing:
+                    return existing.id
+            except Exception:
+                pass
+            raise
+
+        return publication.id
+
+    @staticmethod
     async def findAll(session: AsyncSession, limit: int | None = None, offset: int = 0) -> list[Publication]:
         """Return list of Publication ORM objects.
 
