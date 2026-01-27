@@ -40,7 +40,7 @@ app.include_router(metrics.router)
 # CORS Middleware
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=['http://localhost:5173', 'http://181.199.58.13:5173'],
+  allow_origins=['http://localhost:5173'],
   allow_methods=['*'],
   allow_headers=['*'],
 )
