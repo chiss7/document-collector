@@ -7,7 +7,7 @@ asyncpg==0.30.0
 psycopg[binary]==3.3.2
 
 # Validation
-pydantic==2.10.0
+pydantic==2.12.5
 pydantic-settings==2.2.1
 
 # Auth (JWT desde Java)
@@ -28,3 +28,9 @@ torch==2.10.0
 
 # Scheduling
 apscheduler==3.11.2
+
+# Supabase storage for PDF uploads
+supabase==2.27.2
+python-multipart==0.0.22
+pandas==2.2.3
+openpyxl==3.1.2

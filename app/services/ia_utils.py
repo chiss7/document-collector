@@ -23,6 +23,20 @@ IA_KEYWORDS = [
     r'\bprocesamiento de lenguaje natural\b',
     r'\bvisi[oó]n por computador\b',
     r'\bcomputer vision\b',
+    r'\bvisi[oó]n artificial\b',
+    r'\bdetecci[oó]n de objetos\b',
+    r'\bdetecci[oó]n de anomal[ií]as\b',
+    # chatbots and generative models
+    r'\bmodelos generativos\b',
+    r'\btransformers\b',
+    r'\bllm\b',
+    r'\bchatgpt\b',
+    r'\bclasificaci[oó]n de sentimientos\b',
+    r'\bmodelos preentrenados\b',
+    r'\btensorflow\b',
+    r'\bpytorch\b',
+    r'\bkeras\b',
+    r'\brandom forest\b',
 ]
 
 IA_REGEX = re.compile('|'.join(IA_KEYWORDS), re.IGNORECASE)

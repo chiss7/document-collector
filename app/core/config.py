@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     # When True, authentication is bypassed (useful only in development)
     DISABLE_AUTH: bool = False
 
+    # Supabase storage configuration
+    SUPABASE_URL: str | None = None
+    SUPABASE_KEY: str | None = None
+    SUPABASE_BUCKET: str = "ia-docs-uce"
+
     class Config:
         env_file = ".env"
 

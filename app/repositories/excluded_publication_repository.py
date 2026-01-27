@@ -58,3 +58,12 @@ class ExcludedPublicationRepository:
                 raise
 
         return inserted_urls
+
+    @staticmethod
+    async def uuids_in(session: AsyncSession, uuids: list[str]) -> Set[str]:
+        """Return set of `uuid` values from ExcludedPublication that are present in `uuids`."""
+        if not uuids:
+            return set()
+        stmt = select(ExcludedPublication.uuid).where(ExcludedPublication.uuid.in_(uuids))
+        res = await session.execute(stmt)
+        return set(res.scalars().all())
