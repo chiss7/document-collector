@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import load_publications, publications, metrics
+from app.api.routes import load_publications, publications, metrics, social_media_records, social_media_metrics
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +36,8 @@ app = FastAPI(
 app.include_router(load_publications.router)
 app.include_router(publications.router)
 app.include_router(metrics.router)
+app.include_router(social_media_records.router)
+app.include_router(social_media_metrics.router)
 
 # CORS Middleware
 app.add_middleware(
