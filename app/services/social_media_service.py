@@ -169,6 +169,7 @@ async def import_from_excel(file: UploadFile, session: Optional[AsyncSession] = 
             location=g_str("location"),
             pais=g_str("pais"),
             ciudad=g_str("ciudad"),
+            normalized_city=g_str("normalized_city"),
             sector=g_str("sector"),
             gen=g_str("gen"),
             lang=g_str("lang"),

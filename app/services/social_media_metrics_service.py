@@ -55,19 +55,19 @@ async def get_social_media_geographic_metrics(session: Optional[AsyncSession] = 
 
     async def _run(sess: AsyncSession):
         stmt = select(
-            SocialMediaRecord.ciudad,
+            SocialMediaRecord.normalized_city,
             func.count().label("total"),
             func.avg(SocialMediaRecord.sentiment).label("avg_sentiment"),
             func.avg(SocialMediaRecord.interaccion).label("avg_interaccion"),
             func.avg(SocialMediaRecord.engagement).label("avg_engagement"),
-        ).group_by(SocialMediaRecord.ciudad).order_by(func.count().desc())
+        ).group_by(SocialMediaRecord.normalized_city).order_by(func.count().desc())
 
         res = await sess.execute(stmt)
         by_city = []
         for r in res.fetchall():
             total = int(r.total or 0)
             by_city.append({
-                "ciudad": r.ciudad,
+                "ciudad": r.normalized_city,
                 "total": total,
                 "avg_sentiment": float(r.avg_sentiment) if r.avg_sentiment is not None else 0.0,
                 "avg_interaccion": float(r.avg_interaccion) if r.avg_interaccion is not None else 0.0,
@@ -214,22 +214,22 @@ async def get_social_media_sentiment_metrics(session: Optional[AsyncSession] = N
                 "pct_neg": float(r.neg / total * 100) if total else 0.0,
             })
 
-        # sentiment by city
+        # sentiment by normalized city
         stmt_city = select(
-            SocialMediaRecord.ciudad,
+            SocialMediaRecord.normalized_city,
             func.coalesce(func.avg(SocialMediaRecord.sentiment), 0).label("avg_sentiment"),
             func.coalesce(func.sum(case((SocialMediaRecord.sentiment == 1, 1), else_=0)), 0).label("pos"),
             func.coalesce(func.sum(case((SocialMediaRecord.sentiment == 0, 1), else_=0)), 0).label("neu"),
             func.coalesce(func.sum(case((SocialMediaRecord.sentiment == -1, 1), else_=0)), 0).label("neg"),
             func.count().label("total"),
-        ).group_by(SocialMediaRecord.ciudad).order_by(func.count().desc())
+        ).group_by(SocialMediaRecord.normalized_city).order_by(func.count().desc())
 
         res_city = await sess.execute(stmt_city)
         by_city = []
         for r in res_city.fetchall():
             total = int(r.total or 0)
             by_city.append({
-                "ciudad": r.ciudad,
+                "ciudad": r.normalized_city,
                 "avg_sentiment": float(r.avg_sentiment) if r.avg_sentiment is not None else 0.0,
                 "pos": int(r.pos or 0),
                 "neu": int(r.neu or 0),
@@ -264,6 +264,37 @@ async def get_social_media_sentiment_metrics(session: Optional[AsyncSession] = N
                 "pct_neg": float(r.neg / total * 100) if total else 0.0,
             })
 
+        # Sentiment histogram with 5 category buckets for plotting
+        # Categories and ranges:
+        # Muy negativo: sentiment <= -0.8
+        # Negativo: -0.8 < sentiment < -0.2
+        # Neutro: -0.2 <= sentiment <= 0.2
+        # Positivo: 0.2 < sentiment < 0.8
+        # Muy positivo: sentiment >= 0.8
+        stmt_hist = select(
+            func.coalesce(func.sum(case((SocialMediaRecord.sentiment <= -0.8, 1), else_=0)), 0).label("muy_neg"),
+            func.coalesce(func.sum(case(((SocialMediaRecord.sentiment > -0.8) & (SocialMediaRecord.sentiment < -0.2), 1), else_=0)), 0).label("neg"),
+            func.coalesce(func.sum(case(((SocialMediaRecord.sentiment >= -0.2) & (SocialMediaRecord.sentiment <= 0.2), 1), else_=0)), 0).label("neu"),
+            func.coalesce(func.sum(case(((SocialMediaRecord.sentiment > 0.2) & (SocialMediaRecord.sentiment < 0.8), 1), else_=0)), 0).label("pos"),
+            func.coalesce(func.sum(case((SocialMediaRecord.sentiment >= 0.8, 1), else_=0)), 0).label("muy_pos"),
+        ).where(SocialMediaRecord.sentiment != None)
+
+        res_hist = await sess.execute(stmt_hist)
+        row = res_hist.fetchone()
+        muy_neg = int(row.muy_neg or 0)
+        neg = int(row.neg or 0)
+        neu = int(row.neu or 0)
+        pos = int(row.pos or 0)
+        muy_pos = int(row.muy_pos or 0)
+
+        bins = [
+            {"category": "Muy negativo", "range": "<= -0.8", "min": None, "max": -0.8, "count": muy_neg},
+            {"category": "Negativo", "range": "-0.8 a -0.2", "min": -0.8, "max": -0.2, "count": neg},
+            {"category": "Neutro", "range": "-0.2 a 0.2", "min": -0.2, "max": 0.2, "count": neu},
+            {"category": "Positivo", "range": "0.2 a 0.8", "min": 0.2, "max": 0.8, "count": pos},
+            {"category": "Muy positivo", "range": ">= 0.8", "min": 0.8, "max": None, "count": muy_pos},
+        ]
+
         return {
             "overall": {
                 "total_with_sentiment": total_with,
@@ -277,6 +308,11 @@ async def get_social_media_sentiment_metrics(session: Optional[AsyncSession] = N
             "by_network": by_network,
             "by_city": by_city,
             "by_type": by_type,
+            "histogram": {
+                "bins": bins,
+                "bin_count": len(bins),
+                "total_count": sum(b["count"] for b in bins),
+            },
         }
 
     if own:
@@ -452,7 +488,7 @@ async def get_social_media_volume_metrics(session: Optional[AsyncSession] = None
         by_network = [{"red": r[0], "count": int(r[1])} for r in res_net.fetchall()]
 
         # posts by city
-        stmt_city = select(SocialMediaRecord.ciudad, func.count()).group_by(SocialMediaRecord.ciudad).order_by(func.count().desc())
+        stmt_city = select(SocialMediaRecord.normalized_city, func.count()).group_by(SocialMediaRecord.normalized_city).order_by(func.count().desc())
         res_city = await sess.execute(stmt_city)
         by_city = [{"ciudad": r[0], "count": int(r[1])} for r in res_city.fetchall()]
 

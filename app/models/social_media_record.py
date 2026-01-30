@@ -46,6 +46,7 @@ class SocialMediaRecord(Base):
     location: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     pais: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     ciudad: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    normalized_city: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     sector: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     gen: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     lang: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
