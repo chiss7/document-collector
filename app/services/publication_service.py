@@ -33,7 +33,7 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
             title=payload.title,
             abstract=payload.abstract,
             original_abstract=payload.original_abstract or payload.abstract,
-            source_url=payload.source_url,
+            source_url=payload.source_url if payload.source_url else None,
             pdf_url=payload.pdf_url,
             uuid=generated_uuid,
             published_date=payload.published_date,
