@@ -42,7 +42,7 @@ app.include_router(social_media_metrics.router)
 # CORS Middleware
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=['http://localhost:5173'],
+  allow_origins=['http://localhost:5173', 'https://observatorio-ia.vercel.app'],
   allow_methods=['*'],
   allow_headers=['*'],
 )
