@@ -35,8 +35,8 @@ async def list_publications_paged(query: PublicationQuery):
 
 
 @router.post("")
-async def create_single_publication(request: Request, payload_json: str | None = Form(None), pdf_file: UploadFile | None = File(None)):
-    """Accepts either a JSON body or a multipart form with a `payload_json` field (JSON string) and optional `pdf_file`."""
+async def create_single_publication(request: Request, file: UploadFile = File(...), payload_json: str | None = Form(None)):
+    """Accepts either a JSON body or a multipart form with a `payload_json` field (JSON string) and required `pdf_file`."""
     try:
         if payload_json:
             print(payload_json)
@@ -45,7 +45,7 @@ async def create_single_publication(request: Request, payload_json: str | None =
             body = await request.json()
             payload = PublicationCreateDTO.model_validate(body)
 
-        pub_id = await create_publication(payload, pdf_file=pdf_file)
+        pub_id = await create_publication(payload, pdf_file=file)
     except Exception as e:
         from fastapi import HTTPException
 

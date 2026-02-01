@@ -7,7 +7,7 @@ from app.models.contributor import Contributor, ContributorRole
 from app.schemas.publication import PublicationCreateDTO
 import uuid
 from fastapi import UploadFile
-import io
+from datetime import datetime
 
 from app.core.supabase_config import client as supabase_client
 from app.core.config import settings
@@ -33,18 +33,18 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
             title=payload.title,
             abstract=payload.abstract,
             original_abstract=payload.original_abstract or payload.abstract,
-            source_url=payload.source_url,
+            source_url=payload.source_url if payload.source_url else None,
             pdf_url=payload.pdf_url,
             uuid=generated_uuid,
-            published_date=payload.published_date,
-            accessioned_date=payload.accessioned_date,
-            available_date=payload.available_date,
+            published_date=datetime.now(),
+            accessioned_date=datetime.now(),
+            available_date=datetime.now(),
             extent=payload.extent,
-            publisher=payload.publisher,
-            rights=payload.rights,
+            publisher="Universidad Central del Ecuador",
+            rights="openAccess",
             rights_uri=payload.rights_uri,
             type=payload.type,
-            entity_type=payload.entity_type,
+            entity_type="Publication",
         )
 
         # attach contributors

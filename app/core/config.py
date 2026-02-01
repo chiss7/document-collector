@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str | None = None
     SUPABASE_BUCKET: str = "ia-docs-uce"
 
-    class Config:
-        env_file = ".env"
+    model_config = {
+        "env_file": ".env",
+        # allow extra env vars (e.g. ENV, DISABLE_NLP) without raising
+        "extra": "ignore",
+    }
 
 
 settings = Settings()

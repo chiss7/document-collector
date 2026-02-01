@@ -49,7 +49,7 @@ class PublicationCreateDTO(BaseModel):
     title: str
     abstract: str
     original_abstract: Optional[str] = None
-    source_url: str
+    source_url: Optional[str] = None
     pdf_url: Optional[str] = None
     published_date: Optional[date] = None
     accessioned_date: Optional[datetime] = None

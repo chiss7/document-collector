@@ -1,15 +1,20 @@
 from typing import Dict, Any
 import re
 import asyncio
-from transformers import pipeline
+import os
 
 import html
 import unicodedata
 from typing import Optional
 
 from app.services.ia_utils import IA_REGEX
-from sentence_transformers import SentenceTransformer, util
-import torch
+
+# Determine whether to disable NLP heavy imports at runtime. This can be
+# controlled by environment variables:
+# - ENV=production  -> disables NLP
+# - DISABLE_NLP=1/true/yes -> disables NLP
+ENV = os.getenv("ENV", "").lower()
+DISABLE_NLP = ENV == "production" or os.getenv("DISABLE_NLP", "").lower() in ("1", "true", "yes")
 
 # Embeddings description used to represent the "IA" concept
 _AI_DESCRIPTION = (
@@ -41,7 +46,26 @@ class ClassifierService:
 
         Returns dict with `labels` and `scores` (same shape as pipeline output).
         """
+        # If NLP is disabled in this environment, fall back to regex classifier
+        if DISABLE_NLP:
+            return await cls.regex(text)
+
         def _init_and_run(t: str):
+            # lazy import to avoid heavy module load at startup
+            try:
+                from transformers import pipeline
+            except Exception as e:
+                # if import fails, fallback to regex
+                return {
+                    "sequence": t,
+                    "labels": [
+                        "el artículo discute inteligencia artificial, machine learning, deep learning, redes neuronales, aprendizaje automático o algoritmos de IA",
+                        "el artículo NO menciona IA ni ML; trata de blockchain, smart contracts, cadena de suministro u otros temas sin componentes de aprendizaje automático",
+                    ],
+                    "scores": [0.01, 0.99],
+                    "note": f"transformers import failed: {e}",
+                }
+
             # lazy init in thread
             if cls._hf_pipeline is None:
                 cls._hf_pipeline = pipeline("zero-shot-classification", model="MoritzLaurer/ModernBERT-large-zeroshot-v2.0")
@@ -141,7 +165,18 @@ class ClassifierService:
         Loads the model lazily in a background thread and returns a dict with
         `similitud` (float) and `es_ia` (bool).
         """
+        # If NLP is disabled, return a safe default instead of loading models
+        if DISABLE_NLP:
+            return {"similitud": 0.0, "es_ia": False, "texto": "", "note": "nlp_disabled"}
+
         def _init_and_encode(titulo: str, abstract_text: str, subjects_list: list[str], thr: float):
+            try:
+                # lazy imports
+                from sentence_transformers import SentenceTransformer, util
+                import torch
+            except Exception as e:
+                return {"similitud": 0.0, "es_ia": False, "texto": "", "note": f"sentence_transformers import failed: {e}"}
+
             if cls._emb_model is None:
                 device = 'cuda' if torch.cuda.is_available() else 'cpu'
                 cls._emb_model = SentenceTransformer('intfloat/multilingual-e5-large', device=device)
