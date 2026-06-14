@@ -36,6 +36,9 @@ class Publication(Base):
         back_populates="publications",
     )
 
+    # Journal name (OAI source)
+    journal_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
     # Campos adicionales extraídos desde metadata
     uuid: Mapped[Optional[str]] = mapped_column(String(100), nullable=False)
     extent: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
