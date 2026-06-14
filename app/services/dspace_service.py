@@ -1,3 +1,5 @@
+import hashlib
+import re
 import requests
 import unicodedata
 import asyncio
@@ -13,6 +15,62 @@ from app.models.contributor import Contributor, ContributorRole
 from app.db.session import AsyncSessionLocal
 from app.services.classifier_service import ClassifierService
 from app.services.ia_utils import IA_REGEX
+
+_http_session: requests.Session | None = None
+
+def _is_bot_detected(response: requests.Response) -> bool:
+    return (
+        'application/json' not in (response.headers.get('Content-Type', '') or '')
+        and 'Bot Detection' in response.text[:500]
+    )
+
+async def _get_http_session(*, force: bool = False) -> requests.Session:
+    global _http_session
+    if not force and _http_session is not None:
+        return _http_session
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+    }
+
+    s = requests.Session()
+    s.headers.update(headers)
+
+    probe_url = f"{settings.DSPACE_API_BASE_URL}/discover/search/objects?scope={settings.DSPACE_COLLECTION_UUID}&size=1&page=0"
+    r = await asyncio.to_thread(s.get, probe_url, timeout=15)
+
+    match = re.search(r'digestMessage\("([^"]+)"', r.text)
+    if not match:
+        _http_session = s
+        return s
+
+    salt = match.group(1)
+
+    def _solve_pow(salt: str) -> int:
+        nonce = 0
+        while True:
+            h = hashlib.sha256((salt + str(nonce)).encode()).hexdigest()
+            if h.startswith('0000'):
+                return nonce
+            nonce += 1
+
+    nonce = await asyncio.to_thread(_solve_pow, salt)
+    await asyncio.to_thread(s.post, "https://www.dspace.uce.edu.ec/challenge", data={"challenge": str(nonce)})
+    _http_session = s
+    return s
+
+async def _http_get(url: str, timeout: int = 10) -> requests.Response:
+    http = await _get_http_session()
+    response = await asyncio.to_thread(http.get, url, timeout=timeout)
+    if _is_bot_detected(response):
+        http = await _get_http_session(force=True)
+        response = await asyncio.to_thread(http.get, url, timeout=timeout)
+    return response
 
 async def fetch_and_save_ia_publications(session: AsyncSession | None = None, classifier_method: str = "regex"):
     """Fetch and save IA publications.
@@ -42,13 +100,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
             f"?scope={settings.DSPACE_COLLECTION_UUID}&size={size}&page={page}"
         )
         try:
-            # run blocking requests.get in a thread to avoid blocking event loop
-            net_call = asyncio.to_thread(requests.get, url, timeout=10)
-            try:
-                response = await asyncio.wait_for(net_call, timeout=20)
-            except asyncio.TimeoutError:
-                print(f"Timeout fetching API page {page}")
-                break
+            response = await _http_get(url)
             response.raise_for_status()
             data = response.json()
         except Exception as e:
@@ -71,14 +123,14 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
             if source_url in existing_pub_urls or source_url in existing_exc_urls:
                 continue
 
-            # Extraer y mapear datos (autores y asesores están dentro de `metadata`)
+            # Extraer y mapear datos (autores y asesores estan dentro de `metadata`)
             metadata = item.get('metadata', {}) or {}
 
             authors = _extract_metadata_values('dc.contributor.author', metadata, item)
             advisors = _extract_metadata_values('dc.contributor.advisor', metadata, item)
             subjects = _extract_metadata_values('dc.subject', metadata, item) or _extract_metadata_values('dc.subject.proposal', metadata, item)
 
-            # Fechas: issued (publicación), accessioned, available
+            # Fechas: issued (publicacion), accessioned, available
             issued_vals = _extract_metadata_values('dc.date.issued', metadata, item)
             published_date_str = issued_vals[0] if issued_vals else None
             published_date = None
@@ -127,7 +179,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                     # Candidate labels updated to longer, descriptive Spanish strings.
                     if labels and scores:
                         positive_label = (
-                            "el artículo discute inteligencia artificial, machine learning, deep learning, redes neuronales, aprendizaje automático o algoritmos de ia"
+                            "el articulo discute inteligencia artificial, machine learning, deep learning, redes neuronales, aprendizaje automatico o algoritmos de ia"
                         )
                         # find index of positive label (case-insensitive)
                         idx = next(
@@ -151,10 +203,6 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                     is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
             else:
                 is_ia = bool(IA_REGEX.search(text_for_title_abstract) or IA_REGEX.search(subjects_text))
-
-            #if is_about_ia(item) and not is_ia:
-                # Keep backward-compatibility: if original regex matched, treat as IA
-                #is_ia = True
 
             if is_ia:
                 publication = Publication(
@@ -358,7 +406,6 @@ async def fetch_and_attach_pdf_urls(session: AsyncSession | None = None, limit: 
             print("fetch_and_attach_pdf_urls: started (created session)")
             return await fetch_and_attach_pdf_urls(session, limit)
 
-    # load publications (optionally limited)
     pubs = await PublicationRepository.findAll(session, limit=limit)
     updated = []
 
@@ -367,19 +414,13 @@ async def fetch_and_attach_pdf_urls(session: AsyncSession | None = None, limit: 
         if not uuid_val:
             continue
 
-        # skip if already has pdf_url
         if getattr(pub, "pdf_url", None):
             continue
 
         bundles_url = f"https://www.dspace.uce.edu.ec/server/api/core/items/{uuid_val}/bundles"
 
         try:
-            net_call = asyncio.to_thread(requests.get, bundles_url, timeout=10)
-            try:
-                response = await asyncio.wait_for(net_call, timeout=20)
-            except asyncio.TimeoutError:
-                print(f"Timeout fetching bundles for uuid {uuid_val}")
-                continue
+            response = await _http_get(bundles_url)
             response.raise_for_status()
             data = response.json()
         except Exception as e:
@@ -389,29 +430,21 @@ async def fetch_and_attach_pdf_urls(session: AsyncSession | None = None, limit: 
         bundles = data.get("_embedded", {}).get("bundles", []) or []
         original = next((b for b in bundles if b.get("name") == "ORIGINAL"), None)
         if not original:
-            # no ORIGINAL bundle found
             continue
 
-        # first-level href to bitstreams collection
         bitstreams_href = original.get("_links", {}).get("bitstreams", {}).get("href")
         if not bitstreams_href:
             continue
 
         try:
-            net_call2 = asyncio.to_thread(requests.get, bitstreams_href, timeout=10)
-            try:
-                resp2 = await asyncio.wait_for(net_call2, timeout=20)
-            except asyncio.TimeoutError:
-                print(f"Timeout fetching bitstreams for uuid {uuid_val}")
-                continue
-            resp2.raise_for_status()
-            data2 = resp2.json()
+            response2 = await _http_get(bitstreams_href)
+            response2.raise_for_status()
+            data2 = response2.json()
         except Exception as e:
             print(f"Error fetching bitstreams for uuid {uuid_val}: {e}")
             continue
 
         bitstreams = data2.get("_embedded", {}).get("bitstreams", []) or []
-        # find bitstream object whose bundleName is ORIGINAL
         bs = next((b for b in bitstreams if b.get("bundleName") == "ORIGINAL"), None)
         if not bs:
             continue
