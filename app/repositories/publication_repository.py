@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from typing import List, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -380,6 +381,15 @@ class PublicationRepository:
                 # simple publication column
                 if hasattr(Publication, field):
                     col = getattr(Publication, field)
+                    # coerce string values to date/datetime for date-typed columns
+                    try:
+                        py_type = col.type.python_type
+                        if py_type is date and isinstance(value, str):
+                            value = date.fromisoformat(value)
+                        elif py_type is datetime and isinstance(value, str):
+                            value = datetime.fromisoformat(value)
+                    except (AttributeError, ValueError):
+                        pass
                     if op == "ilike":
                         conditions.append(col.ilike(f"%{value}%"))
                     elif op == "like":
@@ -435,3 +445,11 @@ class PublicationRepository:
         stmt = select(Publication.uuid).where(Publication.uuid.in_(uuids))
         res = await session.execute(stmt)
         return set(res.scalars().all())
+
+    @staticmethod
+    async def get_distinct_values(session: AsyncSession, field: str, limit: int = 500) -> list:
+        """Return distinct non-null values for a given column, ordered alphabetically."""
+        col = getattr(Publication, field)
+        stmt = select(col).distinct().where(col.isnot(None)).order_by(col).limit(limit)
+        res = await session.execute(stmt)
+        return list(res.scalars().all())

@@ -4,7 +4,7 @@ from app.repositories.publication_repository import PublicationRepository
 from app.db.session import AsyncSessionLocal
 from app.models.publication import Publication
 from app.models.contributor import Contributor, ContributorRole
-from app.schemas.publication import PublicationCreateDTO
+from app.schemas.publication import PublicationCreateDTO, FilterOptionsResponse
 import uuid
 from fastapi import UploadFile
 from datetime import datetime
@@ -117,3 +117,23 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
         async with AsyncSessionLocal() as sess:
             return await _create(sess)
     return await _create(session)
+
+
+async def get_filter_options(session: Optional[AsyncSession] = None) -> FilterOptionsResponse:
+    """Return distinct non-null values for publisher, entity_type, and journal_name."""
+    own = session is None
+    if own:
+        async with AsyncSessionLocal() as s:
+            return await _fetch_filter_options(s)
+    return await _fetch_filter_options(session)
+
+
+async def _fetch_filter_options(session: AsyncSession) -> FilterOptionsResponse:
+    publisher = await PublicationRepository.get_distinct_values(session, "publisher")
+    entity_type = await PublicationRepository.get_distinct_values(session, "entity_type")
+    journal_name = await PublicationRepository.get_distinct_values(session, "journal_name")
+    return FilterOptionsResponse(
+        publisher=publisher,
+        entity_type=entity_type,
+        journal_name=journal_name,
+    )

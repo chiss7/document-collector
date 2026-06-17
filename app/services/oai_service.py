@@ -62,7 +62,7 @@ def _get_all_lang_preferred(element, tag: str, preferred: str = "es") -> list[st
                     es_vals.append(val)
                 else:
                     other_vals.append(val)
-    return es_vals + other_vals
+    return es_vals or other_vals
 
 
 def _get_one(element, tag: str) -> str:
