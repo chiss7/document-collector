@@ -3,15 +3,18 @@ from fastapi import APIRouter, Depends, Request, Form, File, UploadFile
 from typing import Optional
 import json
 
-from app.services.publication_service import get_all_publications
+from app.services.publication_service import get_all_publications, create_publication, get_filter_options
 from app.core.security import get_current_user
-from app.schemas.publication import PublicationDTO
+from app.schemas.publication import PublicationDTO, PublicationCreateDTO, FilterOptionsResponse
 from app.schemas.publication_query import PublicationQuery
 from app.services.publication_paged_service import get_publications_paged
-from app.schemas.publication import PublicationCreateDTO
-from app.services.publication_service import create_publication
 
 router = APIRouter(prefix="/publications", tags=["Publications"])
+
+
+@router.get("/filter-options", response_model=FilterOptionsResponse)
+async def list_filter_options():
+    return await get_filter_options()
 
 
 @router.get("")

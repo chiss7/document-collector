@@ -154,6 +154,10 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
             uuid_val = item.get('uuid', None)
             extent = first_meta('dc.format.extent', metadata, item)
             publisher = first_meta('dc.publisher', metadata, item)
+            if publisher:
+                pub_upper = publisher.upper()
+                if 'UCE' in pub_upper or 'UNIVERSIDAD CENTRAL DEL ECUDAOR' in pub_upper:
+                    publisher = 'Universidad Central del Ecuador'
             rights = first_meta('dc.rights', metadata, item)
             rights_uri = first_meta('dc.rights.uri', metadata, item)
             typ = first_meta('dc.type', metadata, item)

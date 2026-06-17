@@ -90,3 +90,11 @@ class PublicationCreateDTO(BaseModel):
         if not v or len(v) == 0:
             raise ValueError("contributors must contain at least one item")
         return v
+
+
+class FilterOptionsResponse(BaseModel):
+    publisher: list[str]
+    entity_type: list[str]
+    journal_name: list[str]
+
+    model_config = ConfigDict(from_attributes=True)
