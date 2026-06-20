@@ -9,6 +9,6 @@ class ExcludedPublication(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    uuid: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    uuid: Mapped[str] = mapped_column(String(100))
     title: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     url: Mapped[str] = mapped_column(String(1000), unique=True)
