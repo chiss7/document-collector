@@ -16,10 +16,20 @@ class Settings(BaseSettings):
     # When True, authentication is bypassed (useful only in development)
     DISABLE_AUTH: bool = False
 
+    # Storage provider selection ("supabase" | "r2")
+    STORAGE_PROVIDER: str = "supabase"
+
     # Supabase storage configuration
     SUPABASE_URL: str | None = None
     SUPABASE_KEY: str | None = None
     SUPABASE_BUCKET: str = "ia-docs-uce"
+
+    # Cloudflare R2 storage configuration (S3-compatible)
+    R2_ACCESS_KEY_ID: str | None = None
+    R2_SECRET_ACCESS_KEY: str | None = None
+    R2_ENDPOINT: str | None = None
+    R2_BUCKET: str = ""
+    R2_PUBLIC_URL: str | None = None
 
     # OAI-PMH journals list.
     # Override via env var OAI_JOURNALS as a JSON string:

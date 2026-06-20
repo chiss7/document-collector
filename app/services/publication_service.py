@@ -6,11 +6,13 @@ from app.models.publication import Publication
 from app.models.contributor import Contributor, ContributorRole
 from app.schemas.publication import PublicationCreateDTO, FilterOptionsResponse
 import uuid
+import logging
 from fastapi import UploadFile
 from datetime import datetime
 
-from app.core.supabase_config import client as supabase_client
-from app.core.config import settings
+logger = logging.getLogger(__name__)
+
+from app.core.storage import get_storage_provider
 
 
 async def get_all_publications(session: Optional[AsyncSession] = None, limit: int | None = None, offset: int = 0):
@@ -44,7 +46,7 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
             rights="openAccess",
             rights_uri=payload.rights_uri,
             type=payload.type,
-            entity_type="Publication",
+            entity_type=payload.type,
         )
 
         # attach contributors
@@ -69,47 +71,23 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
         # subjects: use transient attribute used by repository
         pub._subject_names = payload.subjects or []
 
-        # If a PDF file was provided, upload to Supabase Storage
+        # If a PDF file was provided, upload via the configured storage provider
         if pdf_file is not None:
             try:
-                # ensure file pointer at start
                 try:
                     pdf_file.file.seek(0)
                 except Exception:
                     pass
-                # read bytes
                 try:
                     data = pdf_file.file.read()
                 except Exception:
                     data = await pdf_file.read()
 
-                sb = supabase_client()
-                bucket = settings.SUPABASE_BUCKET or "ia-docs-uce"
-                path = f"{generated_uuid}.pdf"
-                # upload (upsert True to overwrite if exists)
-                # upload bytes directly (supabase client expects bytes/bytearray)
-                # Note: some supabase client versions do not accept `upsert` kwarg
-                sb.storage.from_(bucket).upload(path, data, file_options={
-                    "content-type": "application/pdf",
-                    "cache-control": "3600"
-                },)
-
-                # try to get public URL from client, fallback to constructed public URL
-                try:
-                    res = sb.storage.from_(bucket).get_public_url(path)
-                    url = None
-                    if isinstance(res, dict):
-                        url = res.get("publicUrl") or res.get("publicURL") or res.get("public_url")
-                    if not url:
-                        base = settings.SUPABASE_URL.rstrip('/')
-                        url = f"{base}/storage/v1/object/public/{bucket}/{path}"
-                    pub.pdf_url = url
-                except Exception:
-                    base = settings.SUPABASE_URL.rstrip('/')
-                    pub.pdf_url = f"{base}/storage/v1/object/public/{bucket}/{path}"
+                provider = get_storage_provider()
+                pub.pdf_url = await provider.upload(data, f"{generated_uuid}.pdf")
             except Exception as e:
-                # fail the operation with a clear message
-                raise RuntimeError(f"Supabase upload failed: {e}")
+                logger.error("PDF upload failed: %s", repr(e))
+                raise RuntimeError(f"PDF upload failed: {e}")
 
         return await PublicationRepository.save(sess, pub)
 
