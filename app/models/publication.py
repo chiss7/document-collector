@@ -40,9 +40,9 @@ class Publication(Base):
     journal_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
     # Campos adicionales extraídos desde metadata
-    uuid: Mapped[Optional[str]] = mapped_column(String(100), nullable=False)
+    uuid: Mapped[str] = mapped_column(String(100))
     extent: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    publisher: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    publisher: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     rights: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     rights_uri: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     original_abstract: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
