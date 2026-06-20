@@ -24,8 +24,9 @@ requests==2.32.0
 # Scheduling
 apscheduler==3.11.2
 
-# Supabase storage for PDF uploads
+# Storage providers for PDF uploads
 supabase==2.27.2
+boto3==1.38.3
 python-multipart==0.0.22
 
 # Data IO
