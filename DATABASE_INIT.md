@@ -1,65 +1,62 @@
 # Database Initialization Documentation
 
 ## Overview
-Se ha implementado un sistema automático de inicialización de bases de datos que se ejecuta al iniciar la aplicación.
+El proyecto usa **Alembic** para gestionar las migraciones de base de datos.
+Las migraciones se ejecutan automáticamente al iniciar la aplicación.
 
-## Cambios Realizados
+## Migraciones Automáticas en Startup
+La función `init_database()` en `app/services/database_init_service.py` ejecuta
+`alembic upgrade head` al arrancar la aplicación, aplicando cualquier migración
+pendiente. Las tablas se crean solo si no existen (`CREATE TABLE IF NOT EXISTS`).
 
-### 1. Nuevo Servicio: `app/services/database_init_service.py`
-- **Propósito**: Gestionar la inicialización de las tablas de base de datos
-- **Funciones principales**:
-  - `init_database()`: Verifica que todas las tablas necesarias existan y las crea si no están presentes
-  - `verify_database_connection()`: Verifica que la conexión a la base de datos sea válida
+## Estructura de Migraciones
+- `alembic/versions/` — contiene los archivos de migración
+- `alembic/env.py` — configuración de Alembic (importa modelos, URL de conexión)
+- `alembic.ini` — configuración general de Alembic
 
-### 2. Modificación: `app/main.py`
-Se agregó la inicialización de la base de datos en el evento `lifespan` de FastAPI:
-- Se verifica la conexión a la base de datos
-- Se crean automáticamente todas las tablas que no existan
-- Se registran los eventos en los logs para auditoría
+## Comandos Útiles
 
-## Tablas Creadas Automáticamente
-La aplicación crea automáticamente las siguientes tablas:
-1. `publications` - Publicaciones/documentos
-2. `subjects` - Categorías/asuntos
-3. `publication_subjects` - Relación muchos-a-muchos entre publicaciones y asuntos
-4. `contributors` - Autores/asesores de las publicaciones
-5. `social_media_records` - Registros de redes sociales
-6. `excluded_publication` - Publicaciones excluidas
-
-## Flujo de Inicialización
-
-```
-1. FastAPI inicia
-   ↓
-2. Se ejecuta el lifespan startup
-   ↓
-3. Se verifica la conexión a la BD
-   ↓
-4. Se comparan las tablas existentes con las esperadas
-   ↓
-5. Si hay tablas faltantes, se crean automáticamente
-   ↓
-6. Se registran todos los eventos en los logs
-   ↓
-7. Se inicia el scheduler de trabajos programados
+### Crear una nueva migración automática (después de cambiar modelos)
+```bash
+alembic revision --autogenerate -m "descripcion_del_cambio"
 ```
 
-## Logs
-La inicialización genera los siguientes logs:
-- `Starting application initialization...` - Inicio del proceso
-- `Database connection verified successfully` - Conexión exitosa (si aplica)
-- `Creating missing tables: {...}` - Si hay tablas por crear
-- `Successfully created X table(s)` - Confirmación de creación
-- `All required tables already exist` - Si todas las tablas ya existen
-- `Database initialization completed successfully` - Fin del proceso
+### Revisar el SQL que generará una migración sin ejecutarla
+```bash
+alembic upgrade head --sql
+```
 
-## Manejo de Errores
-Si ocurre un error durante la inicialización:
-- Se registra un mensaje de error detallado en los logs
-- Se lanza una excepción que detiene la aplicación
-- Esto asegura que la aplicación no inicie sin una base de datos correctamente configurada
+### Ejecutar migraciones manualmente
+```bash
+alembic upgrade head
+```
 
-## Requisitos
-- SQLAlchemy 2.0+
-- AsyncIO support
-- Modelos SQLAlchemy correctamente definidos en `app/models/`
+### Revertir la última migración
+```bash
+alembic downgrade -1
+```
+
+### Ver el historial de migraciones
+```bash
+alembic history
+```
+
+### Ver el estado actual
+```bash
+alembic current
+```
+
+## Tablas Gestionadas
+1. `publications` — Publicaciones/documentos
+2. `subjects` — Categorías/asuntos
+3. `publication_subjects` — Relación muchos-a-muchos entre publicaciones y asuntos
+4. `contributors` — Autores/asesores de las publicaciones
+5. `social_media_records` — Registros de redes sociales
+6. `excluded_publication` — Publicaciones excluidas
+
+## Notas Técnicas
+- La conexión de Alembic usa el driver **psycopg** (síncrono), mientras que la app
+  usa **asyncpg** (asíncrono). La conversión se hace automáticamente en `env.py`
+  reemplazando `+asyncpg` por `+psycopg` en la URL.
+- La migración inicial usa `CREATE TABLE IF NOT EXISTS` para ser segura tanto en
+  bases de datos nuevas como existentes.
