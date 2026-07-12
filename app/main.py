@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import load_publications, load_oai_publications, publications, metrics, social_media_records, social_media_metrics
+from app.api.routes import load_publications, load_oai_publications, publications, metrics, social_media_records, social_media_metrics, export_excel, classification_report
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,6 +57,8 @@ app.include_router(publications.router)
 app.include_router(metrics.router)
 app.include_router(social_media_records.router)
 app.include_router(social_media_metrics.router)
+app.include_router(export_excel.router)
+app.include_router(classification_report.router)
 
 # CORS Middleware
 app.add_middleware(
