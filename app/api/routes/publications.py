@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, Request, Form, File, UploadFile
 from typing import Optional
 import json
 
-from app.services.publication_service import get_all_publications, create_publication, get_filter_options
+from app.services.publication_service import get_all_publications, create_publication, get_filter_options, get_ai_publication_stats
 from app.core.security import get_current_user
-from app.schemas.publication import PublicationDTO, PublicationCreateDTO, FilterOptionsResponse
+from app.schemas.publication import PublicationDTO, PublicationCreateDTO, FilterOptionsResponse, AIPublicationStatsResponse
 from app.schemas.publication_query import PublicationQuery
 from app.services.publication_paged_service import get_publications_paged
 
@@ -15,6 +15,11 @@ router = APIRouter(prefix="/publications", tags=["Publications"])
 @router.get("/filter-options", response_model=FilterOptionsResponse)
 async def list_filter_options():
     return await get_filter_options()
+
+
+@router.get("/ai-stats", response_model=AIPublicationStatsResponse)
+async def list_ai_publication_stats():
+    return await get_ai_publication_stats()
 
 
 @router.get("")

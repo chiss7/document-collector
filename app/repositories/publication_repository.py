@@ -10,12 +10,73 @@ from app.models.subject import Subject
 from app.models.contributor import Contributor
 
 
+def _normalize_subject_name(name: str) -> str:
+    name = name.strip()
+    if not name:
+        return name
+    words = name.split()
+    result = []
+    for word in words:
+        if len(word) > 1 and word.isupper():
+            result.append(word)
+        else:
+            result.append(word[0].upper() + word[1:].lower() if len(word) > 1 else word.upper())
+    return " ".join(result)
+
+
 class PublicationRepository:
     """Repository para operaciones en lote sobre `Publication`.
 
     Método público: `saveAll` — inserta publicaciones en lotes de forma eficiente,
     evitando duplicados por `source_url`.
     """
+
+    @staticmethod
+    async def _resolve_subjects(session: AsyncSession, raw_names: set[str]) -> dict[str, Subject]:
+        if not raw_names:
+            return {}
+
+        normalized_set = {_normalize_subject_name(n) for n in raw_names if n}
+
+        lower_set = [n.lower() for n in normalized_set]
+        stmt = select(Subject).where(func.lower(Subject.name).in_(lower_set))
+        res = await session.execute(stmt)
+        existing_by_lower = {s.name.lower(): s for s in res.scalars().all()}
+
+        missing = [n for n in normalized_set if n.lower() not in existing_by_lower]
+        if missing:
+            new_subjects = [Subject(name=n) for n in missing]
+            session.add_all(new_subjects)
+            try:
+                await session.flush()
+            except Exception:
+                await session.rollback()
+                for ns in new_subjects:
+                    try:
+                        session.add(ns)
+                        await session.flush()
+                    except Exception:
+                        await session.rollback()
+
+        stmt = select(Subject).where(func.lower(Subject.name).in_(lower_set))
+        res = await session.execute(stmt)
+        return {s.name: s for s in res.scalars().all()}
+
+    @staticmethod
+    def _assign_subjects(pub: Publication, subject_map: dict[str, Subject]):
+        names = getattr(pub, "_subject_names", []) or []
+        if names:
+            seen = set()
+            subjects = []
+            for n in names:
+                if n and n not in seen:
+                    seen.add(n)
+                    normed = _normalize_subject_name(n)
+                    if normed in subject_map:
+                        subjects.append(subject_map[normed])
+            pub.subjects = subjects
+            if hasattr(pub, "_subject_names"):
+                delattr(pub, "_subject_names")
 
     @staticmethod
     async def saveAll(
@@ -66,31 +127,7 @@ class PublicationRepository:
 
             subject_map = {}
             if subject_names:
-                stmt = select(Subject).where(Subject.name.in_(list(subject_names)))
-                res = await session.execute(stmt)
-                existing_subjects = {s.name: s for s in res.scalars().all()}
-
-                missing = [n for n in subject_names if n not in existing_subjects]
-                new_subjects = [Subject(name=n) for n in missing]
-                if new_subjects:
-                    session.add_all(new_subjects)
-                    # flush to get identities
-                    try:
-                        await session.flush()
-                    except Exception:
-                        await session.rollback()
-                        # try adding one by one in case of conflicts
-                        for ns in new_subjects:
-                            try:
-                                session.add(ns)
-                                await session.flush()
-                            except Exception:
-                                await session.rollback()
-
-                # rebuild mapping
-                stmt = select(Subject).where(Subject.name.in_(list(subject_names)))
-                res = await session.execute(stmt)
-                subject_map = {s.name: s for s in res.scalars().all()}
+                subject_map = await PublicationRepository._resolve_subjects(session, subject_names)
             try:
                 # Attempt to use an isolated transaction for the chunk only if
                 # there isn't one already active on the session.
@@ -99,33 +136,12 @@ class PublicationRepository:
                     started_tx = True
                     async with session.begin():
                         for pub in chunk:
-                            names = getattr(pub, "_subject_names", []) or []
-                            if names:
-                                unique_names = []
-                                seen = set()
-                                for n in names:
-                                    if n and n not in seen:
-                                        seen.add(n)
-                                        unique_names.append(n)
-                                pub.subjects = [subject_map[n] for n in unique_names if n in subject_map]
-                                if hasattr(pub, "_subject_names"):
-                                    delattr(pub, "_subject_names")
-
+                            PublicationRepository._assign_subjects(pub, subject_map)
                             session.add(pub)
                 else:
                     # there's an active transaction; just add and flush
                     for pub in chunk:
-                        names = getattr(pub, "_subject_names", []) or []
-                        if names:
-                            unique_names = []
-                            seen = set()
-                            for n in names:
-                                if n and n not in seen:
-                                    seen.add(n)
-                                    unique_names.append(n)
-                            pub.subjects = [subject_map[n] for n in unique_names if n in subject_map]
-                            if hasattr(pub, "_subject_names"):
-                                delattr(pub, "_subject_names")
+                        PublicationRepository._assign_subjects(pub, subject_map)
                         session.add(pub)
                     try:
                         await session.flush()
@@ -149,30 +165,10 @@ class PublicationRepository:
                         if not session.in_transaction():
                             started_tx_single = True
                             async with session.begin():
-                                names = getattr(pub, "_subject_names", []) or []
-                                if names:
-                                    unique_names = []
-                                    seen = set()
-                                    for n in names:
-                                        if n and n not in seen:
-                                            seen.add(n)
-                                            unique_names.append(n)
-                                    pub.subjects = [subject_map[n] for n in unique_names if n in subject_map]
-                                    if hasattr(pub, "_subject_names"):
-                                        delattr(pub, "_subject_names")
+                                PublicationRepository._assign_subjects(pub, subject_map)
                                 session.add(pub)
                         else:
-                            names = getattr(pub, "_subject_names", []) or []
-                            if names:
-                                unique_names = []
-                                seen = set()
-                                for n in names:
-                                    if n and n not in seen:
-                                        seen.add(n)
-                                        unique_names.append(n)
-                                pub.subjects = [subject_map[n] for n in unique_names if n in subject_map]
-                                if hasattr(pub, "_subject_names"):
-                                    delattr(pub, "_subject_names")
+                            PublicationRepository._assign_subjects(pub, subject_map)
                             session.add(pub)
                             await session.flush()
                         total_inserted += 1
@@ -204,49 +200,14 @@ class PublicationRepository:
                 async with session.begin():
                     names = getattr(publication, "_subject_names", []) or []
                     if names:
-                        stmt = select(Subject).where(Subject.name.in_(list(names)))
-                        res = await session.execute(stmt)
-                        existing_subjects = {s.name: s for s in res.scalars().all()}
-
-                        missing = [n for n in names if n not in existing_subjects]
-                        new_subjects = [Subject(name=n) for n in missing]
-                        if new_subjects:
-                            session.add_all(new_subjects)
-                            try:
-                                await session.flush()
-                            except Exception:
-                                await session.rollback()
-                        # rebuild mapping
-                        stmt = select(Subject).where(Subject.name.in_(list(names)))
-                        res = await session.execute(stmt)
-                        subject_map = {s.name: s for s in res.scalars().all()}
-                        publication.subjects = [subject_map[n] for n in names if n in subject_map]
-                        if hasattr(publication, "_subject_names"):
-                            delattr(publication, "_subject_names")
-
+                        subject_map = await PublicationRepository._resolve_subjects(session, set(names))
+                        PublicationRepository._assign_subjects(publication, subject_map)
                     session.add(publication)
             else:
                 names = getattr(publication, "_subject_names", []) or []
                 if names:
-                    stmt = select(Subject).where(Subject.name.in_(list(names)))
-                    res = await session.execute(stmt)
-                    existing_subjects = {s.name: s for s in res.scalars().all()}
-
-                    missing = [n for n in names if n not in existing_subjects]
-                    new_subjects = [Subject(name=n) for n in missing]
-                    if new_subjects:
-                        session.add_all(new_subjects)
-                        try:
-                            await session.flush()
-                        except Exception:
-                            await session.rollback()
-
-                    stmt = select(Subject).where(Subject.name.in_(list(names)))
-                    res = await session.execute(stmt)
-                    subject_map = {s.name: s for s in res.scalars().all()}
-                    publication.subjects = [subject_map[n] for n in names if n in subject_map]
-                    if hasattr(publication, "_subject_names"):
-                        delattr(publication, "_subject_names")
+                    subject_map = await PublicationRepository._resolve_subjects(session, set(names))
+                    PublicationRepository._assign_subjects(publication, subject_map)
 
                 session.add(publication)
                 try:
