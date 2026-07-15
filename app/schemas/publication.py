@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -98,3 +98,19 @@ class FilterOptionsResponse(BaseModel):
     journal_name: list[str]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LatestPublicationItem(BaseModel):
+    title: str
+    category: str
+    classified_at: datetime | None
+
+
+class AIPublicationStatsResponse(BaseModel):
+    total: int
+    thesis_count: int
+    academic_publication_count: int
+    journal_article_count: int
+    most_used_subject: str | None
+    last_classification_date: datetime | None
+    last_publications: list[LatestPublicationItem]

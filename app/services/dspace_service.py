@@ -3,7 +3,7 @@ import re
 import requests
 import unicodedata
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.publication import Publication
@@ -224,6 +224,7 @@ async def fetch_and_save_ia_publications(session: AsyncSession | None = None, cl
                     rights_uri=rights_uri,
                     type=typ,
                     entity_type=entity_type,
+                    classified_at=datetime.now(timezone.utc),
                 )
 
                 # Temporarily store subject names to be resolved by the repository
