@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api.routes import load_publications, load_oai_publications, publications, metrics, social_media_records, social_media_metrics, export_excel, classification_report
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.database_init_service import init_database, verify_database_connection
@@ -8,7 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler()
+# scheduler = AsyncIOScheduler()
 
 method_dict = {"method": "embeddings"}
 
@@ -27,23 +27,23 @@ async def lifespan(app: FastAPI):
     logger.info("Database initialization completed successfully")
     
     # Start the scheduler for weekly publications job
-    scheduler.add_job(
-        load_publications.run_fetch_and_save,
-        trigger="cron",
-        day_of_week="sun",
-        hour=0,
-        minute=0,
-        kwargs={"payload": method_dict},
-        id="weekly_publications_job",
-        replace_existing=True,
-    )
-    scheduler.start()
-    logger.info("Scheduler started successfully")
+    # scheduler.add_job(
+    #     load_publications.run_fetch_and_save,
+    #     trigger="cron",
+    #     day_of_week="sun",
+    #     hour=0,
+    #     minute=0,
+    #     kwargs={"payload": method_dict},
+    #     id="weekly_publications_job",
+    #     replace_existing=True,
+    # )
+    # scheduler.start()
+    # logger.info("Scheduler started successfully")
 
     yield
 
-    logger.info("Shutting down scheduler...")
-    scheduler.shutdown()
+    # logger.info("Shutting down scheduler...")
+    # scheduler.shutdown()
 
 
 app = FastAPI(
