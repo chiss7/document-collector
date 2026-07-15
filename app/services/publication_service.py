@@ -1,10 +1,12 @@
 from typing import Optional
+from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.publication_repository import PublicationRepository
 from app.db.session import AsyncSessionLocal
-from app.models.publication import Publication
+from app.models.publication import Publication, publication_subjects
 from app.models.contributor import Contributor, ContributorRole
-from app.schemas.publication import PublicationCreateDTO, FilterOptionsResponse
+from app.models.subject import Subject
+from app.schemas.publication import PublicationCreateDTO, FilterOptionsResponse, AIPublicationStatsResponse, LatestPublicationItem
 import uuid
 import logging
 from fastapi import UploadFile
@@ -114,4 +116,81 @@ async def _fetch_filter_options(session: AsyncSession) -> FilterOptionsResponse:
         publisher=publisher,
         entity_type=entity_type,
         journal_name=journal_name,
+    )
+
+
+async def get_ai_publication_stats(session: Optional[AsyncSession] = None) -> AIPublicationStatsResponse:
+    own = session is None
+    if own:
+        async with AsyncSessionLocal() as session:
+            return await _fetch_ai_stats(session)
+    return await _fetch_ai_stats(session)
+
+
+async def _fetch_ai_stats(session: AsyncSession) -> AIPublicationStatsResponse:
+    total_q = select(func.count(Publication.id))
+    journal_q = select(func.count(Publication.id)).where(Publication.entity_type == "JournalArticle")
+    academic_q = select(func.count(Publication.id)).where(Publication.entity_type == "AcademicPublication")
+    last_class_q = select(func.max(Publication.classified_at))
+
+    total = await session.scalar(total_q) or 0
+    journal_count = await session.scalar(journal_q) or 0
+    academic_count = await session.scalar(academic_q) or 0
+    thesis_count = total - journal_count - academic_count
+    last_classification_date = await session.scalar(last_class_q)
+
+    most_used_q = (
+        select(Subject.name, func.count(publication_subjects.c.publication_id).label("cnt"))
+        .select_from(Subject)
+        .join(publication_subjects, Subject.id == publication_subjects.c.subject_id)
+        .group_by(Subject.id, Subject.name)
+        .order_by(func.count(publication_subjects.c.publication_id).desc())
+        .limit(1)
+    )
+    result = await session.execute(most_used_q)
+    row = result.one_or_none()
+    most_used_subject = row[0] if row else None
+
+    # Top 3 latest publications per category
+    journal_latest_q = (
+        select(Publication.title, Publication.classified_at)
+        .where(Publication.entity_type == "JournalArticle", Publication.classified_at.isnot(None))
+        .order_by(Publication.classified_at.desc())
+        .limit(3)
+    )
+    academic_latest_q = (
+        select(Publication.title, Publication.classified_at)
+        .where(Publication.entity_type == "AcademicPublication", Publication.classified_at.isnot(None))
+        .order_by(Publication.classified_at.desc())
+        .limit(3)
+    )
+    thesis_latest_q = (
+        select(Publication.title, Publication.classified_at)
+        .where(
+            or_(
+                Publication.entity_type.is_(None),
+                ~Publication.entity_type.in_(["JournalArticle", "AcademicPublication"]),
+            ),
+            Publication.classified_at.isnot(None),
+        )
+        .order_by(Publication.classified_at.desc())
+        .limit(3)
+    )
+
+    last_publications: list[LatestPublicationItem] = []
+    for row in (await session.execute(journal_latest_q)).all():
+        last_publications.append(LatestPublicationItem(title=row[0], category="Artículo de Revista", classified_at=row[1]))
+    for row in (await session.execute(academic_latest_q)).all():
+        last_publications.append(LatestPublicationItem(title=row[0], category="Publicación Académica", classified_at=row[1]))
+    for row in (await session.execute(thesis_latest_q)).all():
+        last_publications.append(LatestPublicationItem(title=row[0], category="Tesis", classified_at=row[1]))
+
+    return AIPublicationStatsResponse(
+        total=total,
+        thesis_count=thesis_count,
+        academic_publication_count=academic_count,
+        journal_article_count=journal_count,
+        most_used_subject=most_used_subject,
+        last_classification_date=last_classification_date,
+        last_publications=last_publications,
     )

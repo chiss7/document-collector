@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Optional
 
 import httpx
@@ -260,6 +260,7 @@ async def fetch_and_save_oai_publications(
                             type="JournalArticle",
                             entity_type="JournalArticle",
                             journal_name=nombre,
+                            classified_at=datetime.now(timezone.utc),
                         )
                         publication._subject_names = subjects
 

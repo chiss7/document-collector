@@ -50,6 +50,8 @@ class Publication(Base):
     type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     entity_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
+    classified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Relación a contributors (authors/advisors)
     contributors: Mapped[List["Contributor"]] = relationship(
         "Contributor",
