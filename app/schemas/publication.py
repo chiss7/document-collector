@@ -92,6 +92,46 @@ class PublicationCreateDTO(BaseModel):
         return v
 
 
+class PublicationUpdateDTO(BaseModel):
+    title: str
+    abstract: str
+    type: str
+    subjects: List[str] = []
+    contributors: List[ContributorDTO] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("title")
+    def _title_must_not_be_empty(cls, v: str):
+        if not v or not str(v).strip():
+            raise ValueError("title is required and must not be empty")
+        return v
+
+    @field_validator("abstract")
+    def _abstract_must_not_be_empty(cls, v: str):
+        if not v or not str(v).strip():
+            raise ValueError("abstract is required and must not be empty")
+        return v
+
+    @field_validator("type")
+    def _type_must_be_valid(cls, v: str):
+        if v not in ("AcademicPublication", "Publication"):
+            raise ValueError("type must be 'AcademicPublication' or 'Publication'")
+        return v
+
+    @field_validator("subjects")
+    def _subjects_must_have_items(cls, v: List[str]):
+        if not v or len(v) == 0:
+            raise ValueError("subjects must contain at least one item")
+        return v
+
+    @field_validator("contributors")
+    def _contributors_must_have_items(cls, v: List[ContributorDTO]):
+        if not v or len(v) == 0:
+            raise ValueError("contributors must contain at least one item")
+        return v
+
+
 class FilterOptionsResponse(BaseModel):
     publisher: list[str]
     entity_type: list[str]
