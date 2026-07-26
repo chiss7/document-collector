@@ -399,6 +399,22 @@ class PublicationRepository:
         return {"items": items, "total": total, "page": page, "size": size}
 
     @staticmethod
+    async def delete(session: AsyncSession, publication: Publication) -> None:
+        async def _delete():
+            await session.delete(publication)
+            try:
+                await session.flush()
+            except Exception:
+                await session.rollback()
+                raise
+
+        if not session.in_transaction():
+            async with session.begin():
+                await _delete()
+        else:
+            await _delete()
+
+    @staticmethod
     async def uuids_in(session: AsyncSession, uuids: list[str]) -> Set[str]:
         """Return set of `uuid` values from Publication that are present in `uuids`."""
         if not uuids:
