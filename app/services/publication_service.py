@@ -1,12 +1,13 @@
 from typing import Optional
 from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.repositories.publication_repository import PublicationRepository
 from app.db.session import AsyncSessionLocal
 from app.models.publication import Publication, publication_subjects
 from app.models.contributor import Contributor, ContributorRole
 from app.models.subject import Subject
-from app.schemas.publication import PublicationCreateDTO, FilterOptionsResponse, AIPublicationStatsResponse, LatestPublicationItem
+from app.schemas.publication import PublicationCreateDTO, PublicationUpdateDTO, FilterOptionsResponse, AIPublicationStatsResponse, LatestPublicationItem
 import uuid
 import logging
 from fastapi import UploadFile
@@ -97,6 +98,116 @@ async def create_publication(payload: PublicationCreateDTO, pdf_file: UploadFile
         async with AsyncSessionLocal() as sess:
             return await _create(sess)
     return await _create(session)
+
+
+async def update_publication(
+    publication_id: int,
+    payload: PublicationUpdateDTO,
+    pdf_file: UploadFile | None = None,
+    session: Optional[AsyncSession] = None,
+) -> Publication:
+    """Update a publication by ID.
+
+    Only allowed if entity_type is 'AcademicPublication' or 'Publication'
+    and classified_at is null.
+    """
+    own = session is None
+    async def _update(sess: AsyncSession):
+        stmt = (
+            select(Publication)
+            .options(selectinload(Publication.subjects), selectinload(Publication.contributors))
+            .where(Publication.id == publication_id)
+        )
+        res = await sess.execute(stmt)
+        pub = res.scalar_one_or_none()
+
+        if not pub:
+            raise ValueError(f"Publication with id {publication_id} not found")
+
+        if pub.entity_type not in ("AcademicPublication", "Publication"):
+            raise ValueError("Publication cannot be modified: entity_type must be 'AcademicPublication' or 'Publication'")
+
+        if pub.classified_at is not None:
+            raise ValueError("Publication cannot be modified: already classified")
+
+        pub.title = payload.title
+        pub.abstract = payload.abstract
+        pub.original_abstract = payload.abstract
+        pub.type = payload.type
+        pub.entity_type = payload.type
+
+        contrib_objs = []
+        for c in payload.contributors or []:
+            role_val = c.role if isinstance(c.role, str) else (c.role.value if hasattr(c.role, 'value') else c.role)
+            try:
+                role_enum = ContributorRole(role_val)
+            except Exception:
+                try:
+                    role_enum = ContributorRole[role_val]
+                except Exception:
+                    role_enum = ContributorRole.author
+            contrib = Contributor(name=c.name, role=role_enum, order=c.order)
+            contrib_objs.append(contrib)
+        pub.contributors = contrib_objs
+
+        pub._subject_names = payload.subjects or []
+
+        if pdf_file is not None:
+            try:
+                try:
+                    pdf_file.file.seek(0)
+                except Exception:
+                    pass
+                try:
+                    data = pdf_file.file.read()
+                except Exception:
+                    data = await pdf_file.read()
+                provider = get_storage_provider()
+                pub.pdf_url = await provider.upload(data, f"{pub.uuid}.pdf")
+            except Exception as e:
+                logger.error("PDF upload failed: %s", repr(e))
+                raise RuntimeError(f"PDF upload failed: {e}")
+
+        await PublicationRepository.save(sess, pub)
+        return pub
+
+    if own:
+        async with AsyncSessionLocal() as sess:
+            return await _update(sess)
+    return await _update(session)
+
+
+async def delete_publication(
+    publication_id: int,
+    session: Optional[AsyncSession] = None,
+) -> int:
+    """Delete a publication by ID.
+
+    Only allowed if entity_type is 'AcademicPublication' or 'Publication'
+    and classified_at is null.
+    """
+    own = session is None
+    async def _delete(sess: AsyncSession):
+        stmt = select(Publication).where(Publication.id == publication_id)
+        res = await sess.execute(stmt)
+        pub = res.scalar_one_or_none()
+
+        if not pub:
+            raise ValueError(f"Publication with id {publication_id} not found")
+
+        if pub.entity_type not in ("AcademicPublication", "Publication"):
+            raise ValueError("Publication cannot be deleted: entity_type must be 'AcademicPublication' or 'Publication'")
+
+        if pub.classified_at is not None:
+            raise ValueError("Publication cannot be deleted: already classified")
+
+        await PublicationRepository.delete(sess, pub)
+        return publication_id
+
+    if own:
+        async with AsyncSessionLocal() as sess:
+            return await _delete(sess)
+    return await _delete(session)
 
 
 async def get_filter_options(session: Optional[AsyncSession] = None) -> FilterOptionsResponse:
