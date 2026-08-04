@@ -10,11 +10,18 @@ class Settings(BaseSettings):
     DSPACE_API_BASE_URL: str
 
     DATABASE_URL: str
-    # Make JWT public key optional so the app can run in dev without tokens
-    JWT_PUBLIC_KEY: str | None = None
-    JWT_ALGORITHM: str = "RS256"
+
+    # Java authentication service URL (e.g. http://localhost:8080)
+    JAVA_SERVICE_URL: str = "http://localhost:8080"
+
     # When True, authentication is bypassed (useful only in development)
     DISABLE_AUTH: bool = False
+
+    # Enable/disable request & response logging middleware
+    REQUEST_LOGGING_ENABLED: bool = True
+
+    # Logging level for request/response logs (DEBUG, INFO, WARNING, ...)
+    LOG_LEVEL: str = "INFO"
 
     # Storage provider selection ("supabase" | "r2")
     STORAGE_PROVIDER: str = "supabase"

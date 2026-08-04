@@ -39,6 +39,7 @@ class PublicationDTO(BaseModel):
     rights_uri: Optional[str] = None
     type: Optional[str] = None
     entity_type: Optional[str] = None
+    classified_at: Optional[datetime] = None
     subjects: List[SubjectDTO] = []
     contributors: List[ContributorDTO] = []
 
