@@ -4,6 +4,8 @@ from app.api.routes import load_publications, load_oai_publications, publication
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.database_init_service import init_database, verify_database_connection
+from app.core.config import settings
+from app.core.logging_middleware import RequestLoggingMiddleware
 import logging
 
 logger = logging.getLogger(__name__)
@@ -67,3 +69,7 @@ app.add_middleware(
   allow_methods=['*'],
   allow_headers=['*'],
 )
+
+# Request/Response logging middleware (outermost so it captures every request)
+if settings.REQUEST_LOGGING_ENABLED:
+    app.add_middleware(RequestLoggingMiddleware)

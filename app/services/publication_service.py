@@ -169,11 +169,15 @@ async def update_publication(
                 raise RuntimeError(f"PDF upload failed: {e}")
 
         await PublicationRepository.save(sess, pub)
+        print(f"[SVC-UPDATE] saved pub id={pub.id}", flush=True)
         return pub
 
     if own:
         async with AsyncSessionLocal() as sess:
-            return await _update(sess)
+            result = await _update(sess)
+            await sess.commit()
+            print(f"[SVC-UPDATE] committed id={result.id}", flush=True)
+            return result
     return await _update(session)
 
 
@@ -195,6 +199,8 @@ async def delete_publication(
         if not pub:
             raise ValueError(f"Publication with id {publication_id} not found")
 
+        print(f"[SVC-DELETE] found pub id={pub.id} entity_type={pub.entity_type} classified_at={pub.classified_at}", flush=True)
+
         if pub.entity_type not in ("AcademicPublication", "Publication"):
             raise ValueError("Publication cannot be deleted: entity_type must be 'AcademicPublication' or 'Publication'")
 
@@ -202,11 +208,15 @@ async def delete_publication(
             raise ValueError("Publication cannot be deleted: already classified")
 
         await PublicationRepository.delete(sess, pub)
+        print(f"[SVC-DELETE] deleted pub id={pub.id}", flush=True)
         return publication_id
 
     if own:
         async with AsyncSessionLocal() as sess:
-            return await _delete(sess)
+            result = await _delete(sess)
+            await sess.commit()
+            print(f"[SVC-DELETE] committed id={result}", flush=True)
+            return result
     return await _delete(session)
 
 

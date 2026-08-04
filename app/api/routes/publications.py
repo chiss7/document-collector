@@ -7,6 +7,7 @@ from app.services.publication_service import get_all_publications, create_public
 from app.core.security import get_current_user
 from app.schemas.publication import PublicationDTO, PublicationCreateDTO, PublicationUpdateDTO, FilterOptionsResponse, AIPublicationStatsResponse
 from app.schemas.publication_query import PublicationQuery
+from app.schemas.response import GenericResponse
 from app.services.publication_paged_service import get_publications_paged
 
 router = APIRouter(prefix="/publications", tags=["Publications"])
@@ -41,7 +42,7 @@ async def list_publications_paged(query: PublicationQuery):
 
 
 @router.post("")
-async def create_single_publication(request: Request, file: UploadFile = File(...), payload_json: str | None = Form(None)):
+async def create_single_publication(request: Request, file: UploadFile = File(...), payload_json: str | None = Form(None), current_user: dict = Depends(get_current_user)):
     """Accepts either a JSON body or a multipart form with a `payload_json` field (JSON string) and required `pdf_file`."""
     try:
         if payload_json:
@@ -54,7 +55,7 @@ async def create_single_publication(request: Request, file: UploadFile = File(..
         pub_id = await create_publication(payload, pdf_file=file)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return {"id": pub_id}
+    return GenericResponse(data={"id": pub_id})
 
 
 @router.put("/{publication_id}")
@@ -70,6 +71,7 @@ async def update_single_publication(
     Only allowed if entity_type is 'AcademicPublication' or 'Publication'
     and classified_at is null.
     """
+    print(f"[PUB-UPDATE] received id={publication_id} payload_json={bool(payload_json)}", flush=True)
     try:
         if payload_json:
             payload = PublicationUpdateDTO.model_validate_json(payload_json)
@@ -79,10 +81,13 @@ async def update_single_publication(
 
         pub = await update_publication(publication_id, payload, pdf_file=file)
     except ValueError as e:
+        print(f"[PUB-UPDATE] error: {e}", flush=True)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        print(f"[PUB-UPDATE] error: {e}", flush=True)
         raise HTTPException(status_code=400, detail=str(e))
 
+    print(f"[PUB-UPDATE] success id={pub.id}", flush=True)
     return {"success": True, "id": pub.id}
 
 
@@ -96,9 +101,12 @@ async def delete_single_publication(
     Only allowed if entity_type is 'AcademicPublication' or 'Publication'
     and classified_at is null.
     """
+    print(f"[PUB-DELETE] received id={publication_id}", flush=True)
     try:
         deleted_id = await delete_publication(publication_id)
     except ValueError as e:
+        print(f"[PUB-DELETE] error: {e}", flush=True)
         raise HTTPException(status_code=400, detail=str(e))
 
+    print(f"[PUB-DELETE] success id={deleted_id}", flush=True)
     return {"success": True, "id": deleted_id}
