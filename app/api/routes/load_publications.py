@@ -1,5 +1,5 @@
 # app/api/routes/load_publications.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 import asyncio
 
@@ -8,6 +8,7 @@ from app.services.dspace_service import fetch_and_save_ia_publications
 from sqlalchemy import select, func
 from app.models.publication import Publication
 from app.models.excluded_publication import ExcludedPublication
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/load", tags=["Load Publications"])
 
@@ -24,7 +25,7 @@ async def run_fetch_and_save(payload: Optional[dict] = None):
 
 
 @router.post("")
-async def start_loading(payload: Optional[dict] = None, background: bool = False):
+async def start_loading(payload: Optional[dict] = None, background: bool = False, current_user: dict = Depends(get_current_user)):
     """Start loading publications.
 
     - If `background` is true (default) the job is scheduled and the endpoint
@@ -45,7 +46,7 @@ async def start_loading(payload: Optional[dict] = None, background: bool = False
 
 
 @router.get("/status")
-async def load_status():
+async def load_status(current_user: dict = Depends(get_current_user)):
     async with AsyncSessionLocal() as session:
       stmt1 = select(func.count(Publication.id))
       stmt2 = select(func.count(ExcludedPublication.id))
