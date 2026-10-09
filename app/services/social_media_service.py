@@ -1,5 +1,7 @@
 from typing import Optional, List
 from io import BytesIO
+from pathlib import Path
+import logging
 import pandas as pd
 
 from fastapi import UploadFile
@@ -8,6 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import AsyncSessionLocal
 from app.models.social_media_record import SocialMediaRecord
 from app.repositories.social_media_record_repository import SocialMediaRecordRepository
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_SOCIAL_MEDIA_SEED_FILE = Path(__file__).resolve().parents[2] / "ecuador_records.xlsx"
 
 
 def _clean_val(val):
@@ -205,3 +211,27 @@ async def import_from_excel(file: UploadFile, session: Optional[AsyncSession] = 
         async with AsyncSessionLocal() as sess:
             return await _save(sess)
     return await _save(session)
+
+
+async def seed_from_excel_if_empty(excel_path: Optional[Path] = None) -> int:
+    """If social_media_records is empty, import rows from the seed Excel file.
+
+    Uses the same import path as POST /social-media/import.
+    Returns the number of inserted records, or 0 if the table already had data.
+    """
+    path = Path(excel_path) if excel_path else DEFAULT_SOCIAL_MEDIA_SEED_FILE
+
+    async with AsyncSessionLocal() as sess:
+        if await SocialMediaRecordRepository.has_any(sess):
+            logger.info("social_media_records already has data; skipping seed import")
+            return 0
+
+    if not path.is_file():
+        raise FileNotFoundError(f"Seed Excel file not found: {path}")
+
+    logger.info("social_media_records is empty; importing seed file %s", path)
+    with path.open("rb") as fh:
+        upload = UploadFile(filename=path.name, file=fh)
+        inserted = await import_from_excel(upload)
+    logger.info("Seed import finished: inserted=%d", inserted)
+    return inserted
