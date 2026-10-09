@@ -4,6 +4,8 @@ from app.api.routes import load_publications, load_oai_publications, publication
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.database_init_service import init_database, verify_database_connection
+from app.services.initial_data_service import load_initial_csv_data
+from app.services.social_media_service import seed_from_excel_if_empty
 from app.core.config import settings
 from app.core.logging_middleware import RequestLoggingMiddleware
 import logging
@@ -27,6 +29,22 @@ async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     await init_database()
     logger.info("Database initialization completed successfully")
+
+    if settings.LOAD_INITIAL_CSV_DATA:
+        try:
+            csv_counts = await load_initial_csv_data()
+            logger.info("Initial CSV restore finished: %s", csv_counts)
+        except Exception:
+            logger.exception("Failed to restore tables from exports/initial_data")
+    else:
+        logger.info("LOAD_INITIAL_CSV_DATA is disabled; skipping CSV restore")
+
+    try:
+        inserted = await seed_from_excel_if_empty()
+        if inserted:
+            logger.info("Loaded %d social media records from ecuador_records.xlsx", inserted)
+    except Exception:
+        logger.exception("Failed to seed social_media_records from ecuador_records.xlsx")
     
     # Start the scheduler for weekly publications job
     # scheduler.add_job(

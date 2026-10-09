@@ -1,5 +1,6 @@
 from typing import List
 import logging
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -12,6 +13,11 @@ if not logging.getLogger().hasHandlers():
 
 
 class SocialMediaRecordRepository:
+    @staticmethod
+    async def has_any(session: AsyncSession) -> bool:
+        result = await session.execute(select(SocialMediaRecord.id).limit(1))
+        return result.scalar_one_or_none() is not None
+
     @staticmethod
     async def saveAll(session: AsyncSession, records: List[SocialMediaRecord], chunk_size: int = 500) -> int:
         logger.info("Starting saveAll: total records=%d", len(records))

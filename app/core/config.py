@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # Enable/disable request & response logging middleware
     REQUEST_LOGGING_ENABLED: bool = True
 
+    # Load CSV dumps from exports/initial_data/ into their matching tables on startup.
+    # Keep False by default so production/dev restarts do not restore automatically.
+    LOAD_INITIAL_CSV_DATA: bool = False
+
     # Logging level for request/response logs (DEBUG, INFO, WARNING, ...)
     LOG_LEVEL: str = "INFO"
 
