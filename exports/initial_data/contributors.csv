@@ -1,0 +1,358 @@
+"id","publication_id","name","role","order"
+1,8,"Ayala, César","author",1
+2,8,"Guerrero, Rosa","author",2
+3,8,"Prócel, Carlos","author",3
+4,8,"Guerra, Paulo","author",4
+5,9,"Sivisapa, Luis","author",1
+6,9,"Paz, Henry","author",2
+7,10,"González, Soledad","author",1
+8,10,"Zambrano, Margarita","author",2
+9,10,"Villacís, César","author",3
+10,10,"Prócel, Carlos","author",4
+11,10,"Bustamante, Andrés","author",5
+12,11,"Martel, Wilfrido","author",1
+13,11,"Carranco, Diego","author",2
+14,11,"Cevallos, Daniel","author",3
+15,12,"Quintanilla, Mateo","author",1
+16,12,"Tamayo, David","author",2
+17,12,"Suntaxi, Diego","author",3
+18,12,"Quintanilla, José","author",4
+19,13,"Farinango Medina, Paola Cristina","author",1
+20,13,"García Navarrete, Ricky Alejandro","author",2
+21,14,"Morales Alquinga, Nataly","author",1
+22,14,"Calvopiña, Luis","author",2
+23,14,"Quimbita, Omar","author",3
+24,15,"Quintana Pacheco, Wendy Arecely","author",1
+25,15,"Camacho, Victor","author",2
+26,15,"Gomez, Pamela","author",3
+27,16,"Torres Tapia, Sebastian Paul","author",1
+28,16,"Tovar Pacheco, Dennis Geovanna","author",2
+29,16,"Martinez Espinoza, Mauro Danilo","author",3
+30,17,"Quintero, O. Lucía","author",1
+31,17,"Jaramillo P, Fabián L.","author",2
+32,17,"Bastidas, Manuela","author",3
+33,18,"Fajardo Heras, Hernán","author",1
+34,18,"Barrera Maura, Manuel","author",2
+35,18,"Robles Bykbaev, Vladimir","author",3
+36,18,"Timbi Sisalima, Cristian","author",4
+37,18,"Calle Ortiz, Eduardo","author",5
+38,19,"Musuña Toapanta, Juan","author",1
+39,19,"Zapata Chancusi, Byron","author",2
+40,19,"Oñate Cadena, Luis","author",3
+41,19,"Campusano Nieto, Gonzalo","author",4
+42,20,"Martínez Mascorro, Guillermo Arturo","author",1
+43,20,"Aguilar Torres, Gualberto","author",2
+44,21,"Morales Tamayo, Yoandrys","author",1
+45,21,"Zamora Hernández, Yusimit Karina","author",2
+46,21,"Vásquez Carrera, Paco Jeovanni","author",3
+47,21,"Porras Vásconez, Mario Paúl","author",4
+48,21,"Bárzaga Quesada, Joao Lázaro","author",5
+49,21,"López Bustamante, Ringo John","author",6
+50,22,"Contreras Urgiles, Wilmer Rafael","author",1
+51,22,"Maldonado Ortega, José","author",2
+52,22,"León Japa, Rogelio","author",3
+53,23,"León Japa, Rogelio Santiago","author",1
+54,23,"Maldonado Ortega, José Luis","author",2
+55,23,"Contreras Urgiles, Rafael Wilmer","author",3
+56,24,"Ramos-Alarcon, Fernando","author",1
+57,24,"Kontorovich, Valeri","author",2
+58,25,"Escalona, Yosveni","author",1
+59,25,"Escalona, Yosveni","author",2
+60,26,"Matute-Pinos, Karina","author",1
+61,26,"Bojorque-Chasi, Rodolfo","author",2
+62,26,"Matute-Pinos, Karina","author",3
+63,26,"Bojorque-Chasi, Rodolfo","author",4
+64,27,"Pérez-Aguilar, Daniel Alexis","author",1
+65,27,"Risco-Ramos, Redy Henry","author",2
+66,27,"Casaverde-Pacherrez, Luis","author",3
+67,27,"Pérez-Aguilar, Daniel Alexis","author",4
+68,27,"Risco-Ramos, Redy Henry","author",5
+69,27,"Casaverde-Pacherrez, Luis","author",6
+70,28,"Montenegro, Bryan","author",1
+71,28,"Flores, Marco","author",2
+72,28,"Montenegro, Bryan","author",3
+73,28,"Flores, Marco","author",4
+74,29,"C. Lampier, Lucas","author",1
+75,29,"L. Coelho, Yves","author",2
+76,29,"O. Caldeira , Eliete M.","author",3
+77,29,"Bastos-Filho, Teodiano F.","author",4
+78,29,"C. Lampier, Lucas","author",5
+79,29,"L. Coelho, Yves","author",6
+80,29,"O. Caldeira , Eliete M.","author",7
+81,29,"Bastos-Filho, Teodiano","author",8
+82,30,"Darad, Simran","author",1
+83,30,"Krishnan, Sridhar","author",2
+84,30,"Darad, Simran","author",3
+85,30,"Krishnan, Sridhar","author",4
+86,31,"Quiñonez-Cuenca, Felipe","author",1
+87,31,"Maza-Merchán, Cristian","author",2
+88,31,"Cuenca-Maldonado, Nilvar","author",3
+89,31,"Quiñones-Cuenca, Manuel","author",4
+90,31,"Torres, Rommel","author",5
+91,31,"Sandoval, Francisco","author",6
+92,31,"Ludeña-González, Patricia","author",7
+93,31,"Quiñonez-Cuenca, Felipe","author",8
+94,31,"Maza-Merchán, Cristian","author",9
+95,31,"Cuenca-Maldonado, Nilvar","author",10
+96,31,"Quiñones-Cuenca, Manuel","author",11
+97,31,"Torres, Rommel","author",12
+98,31,"Sandoval, Francisco","author",13
+99,31,"Ludeña-González, Patricia","author",14
+100,32,"Pereira, Renata","author",1
+101,32,"de Souza, Cleonilson","author",2
+102,32,"Patiño, Darwin","author",3
+103,32,"Lata, Juan","author",4
+104,32,"Pereira, Renata","author",5
+105,32,"de Souza, Cleonilson","author",6
+106,32,"Patiño, Darwin","author",7
+107,32,"Lata, Juan","author",8
+108,33,"Patiño, Darwin","author",1
+109,33,"Medina, Jorge","author",2
+110,33,"Silva, Ricardo","author",3
+111,33,"Guijarro, Alfonso","author",4
+112,33,"Rodríguez, José","author",5
+113,33,"Patiño, Darwin","author",6
+114,33,"Medina, Jorge","author",7
+115,33,"Silva, Ricardo","author",8
+116,33,"Guijarro, Alfonso","author",9
+117,33,"Rodríguez, José","author",10
+118,34,"Yajure-Ramírez, César A.","author",1
+119,34,"Yajure-Ramírez, César A.","author",2
+120,35,"Muñoz-Valverde, P.","author",1
+121,35,"Villena-López, O.","author",2
+122,35,"Mayorga-Ases, L.","author",3
+123,35,"Pérez-Salinas, C.","author",4
+124,35,"Moya, D.","author",5
+125,35,"Muñoz-Valverde, P.","author",6
+126,35,"Villena-López, O.","author",7
+127,35,"Mayorga-Ases, L.","author",8
+128,35,"Pérez-Salinas, C.","author",9
+129,35,"Moya, D.","author",10
+130,36,"Dávila Olivos, Mayra Alejandra","author",1
+131,36,"Herrera Del Águila, Henry Miguel","author",2
+132,36,"Santos López, Félix Melchor","author",3
+133,36,"Dávila Olivos, Mayra Alejandra","author",4
+134,36,"Herrera Del Águila, Henry Miguel","author",5
+135,36,"Santos López, Félix Melchor","author",6
+136,37,"Trujillo-Romero, Felipe","author",1
+137,37,"Trujillo-Romero, Felipe","author",2
+138,38,"Torres Guin, Washington","author",1
+139,38,"Sánchez Aquino, José","author",2
+140,38,"Bustos Gaibor, Samuel","author",3
+141,38,"Coronel Suarez, Marjorie","author",4
+142,38,"Torres Guin, Washington","author",5
+143,38,"Sánchez Aquino, José","author",6
+144,38,"Bustos Gaibor, Samuel","author",7
+145,38,"Coronel Suarez, Marjorie","author",8
+146,39,"Ramírez Vergara, Keren Mitsue","author",1
+147,39,"López-Chau, Asdrúbal","author",2
+148,39,"Rojas Hernández, Rafael","author",3
+149,39,"Ramírez Vergara, Keren Mitsue","author",4
+150,39,"López-Chau, Asdrúbal","author",5
+151,39,"Rojas Hernández, Rafael","author",6
+152,40,"Patiño-Pérez, Darwin","author",1
+153,40,"Armijos-Valarezo, Luis","author",2
+154,40,"Chóez-Acosta, Luis","author",3
+155,40,"Burgos-Robalino, Freddy","author",4
+156,40,"Patiño-Pérez, Darwin","author",5
+157,40,"Armijos-Valarezo, Luis","author",6
+158,40,"Chóez-Acosta, Luis","author",7
+159,40,"Burgos-Robalino, Freddy","author",8
+160,41,"Rayavarapu, Swarajya Madhuri","author",1
+161,41,"Rao, Gottapu Sasibhushana","author",2
+162,41,"Rayavarapu, Swarajya Madhuri","author",3
+163,41,"Rao, Gottapu Sasibhushana","author",4
+164,42,"Buestán Andrade, Pablo Andrés","author",1
+165,42,"Carrión Zamora, Pedro Esteban","author",2
+166,42,"Chamba Lara, Anthony Eduardo","author",3
+167,42,"Pazmiño Piedra, Juan Pablo","author",4
+168,42,"Buestán Andrade, Pablo Andrés","author",5
+169,42,"Carrión Zamora, Pedro Esteban","author",6
+170,42,"Chamba Lara, Anthony Eduardo","author",7
+171,42,"Pazmiño Piedra, Juan Pablo","author",8
+172,43,"Martin, R. John","author",1
+173,43,"Martin, R. John","author",2
+174,44,"Jassim, Abu Baker","author",1
+175,44,"Dondapati, Raja Shekhar","author",2
+176,44,"Jassim, Abu Baker","author",3
+177,44,"Dondapati, Raja Shekhar","author",4
+178,45,"Jaén-Armijos, Gabriela","author",1
+179,45,"Morán-Castillo, Evelyn","author",2
+180,45,"Rivas-Asanza, Wilmer","author",3
+181,45,"Tusa-Jumbo, Eduardo","author",4
+182,45,"Jaén-Armijos, Gabriela","author",5
+183,45,"Morán-Castillo, Evelyn","author",6
+184,45,"Rivas-Asanza, Wilmer","author",7
+185,45,"Tusa-Jumbo, Eduardo","author",8
+186,46,"Arias-Montaño, Elmer I.","author",1
+187,46,"León-Japa, Rogelio S.","author",2
+188,46,"García-Jaramillo, Pedro","author",3
+189,46,"Maldonado Ortega , José","author",4
+190,46,"Arias-Montaño, Elmer I.","author",5
+191,46,"León-Japa, Rogelio S.","author",6
+192,46,"García-Jaramillo, Pedro","author",7
+193,46,"Maldonado Ortega , José","author",8
+194,47,"Luna Romero, Santiago Felipe","author",1
+195,47,"Gouveia, Renato","author",2
+196,47,"Souza, Mauren Abreu","author",3
+197,47,"Luna Romero, Santiago Felipe","author",4
+198,47,"Brazilian, Renato","author",5
+199,47,"Souza, Mauren Abreu","author",6
+200,48,"Betancourt Ludeña, Patricio Bolívar","author",1
+201,48,"Cumbicus-Pineda, Oscar M.","author",2
+202,48,"Betancourt Ludeña, Patricio Bolívar","author",3
+203,48,"Cumbicus-Pineda, Oscar M.","author",4
+204,49,"Carpio Velasco, Francisco Javier","author",1
+205,49,"Garcés Beltrán, Gloria Margarita","author",2
+206,49,"Carpio Velasco, Francisco Javier","author",3
+207,49,"Garcés Beltrán, Gloria Margarita","author",4
+208,50,"Guairacaja Vasconez, Izack Stalyn","author",1
+209,50,"Oña Guamani, Jhon Enrique","author",2
+210,50,"Enríquez Reyes, Robert Arturo","advisor",1
+211,51,"Castillo Gonzaga, Mery Janneth","author",1
+212,51,"Morales Cardoso, Jorge Arturo","advisor",1
+213,52,"Castro Heredia, Santiago Javier","author",1
+214,52,"Huaca Sanguino, Samantha Dennis","author",2
+215,52,"Rosas Lara, Mauro Leonardo","advisor",1
+216,53,"Cando Carrera, Jairo Mauricio","author",1
+217,53,"Beltrán Morales, Jefferson Tarcisio","advisor",1
+218,54,"Zumba Acosta, Gema Adelaida","author",1
+219,54,"Rosas Lara, Mauro Leonardo","advisor",1
+220,55,"Ibarra Tequis, Lenin Esteban","author",1
+221,55,"Panchi Gualoto, Ariel Adrian","author",2
+222,55,"Rosas Lara, Mauro Leonardo","advisor",1
+223,56,"Regalado López, Danilo José","author",1
+224,56,"Moncayo Unda, Milton Giovanny","advisor",1
+225,57,"Simbaña Paguay, Dany Mauricio","author",1
+226,57,"Mendoza Tello, Julio César","advisor",1
+227,58,"Suntaxi Concha, Cristian Paul","author",1
+228,58,"Morales Cardoso, Santiago Leonardo","advisor",1
+229,59,"Candelejo López, Mateo Andrés","author",1
+230,59,"Oña Betancourt, Marlon Patricio","author",2
+231,59,"Mendoza Tello, Julio César","advisor",1
+232,60,"Jácome Escobar, José David","author",1
+233,60,"Viracocha Andrade, Estalin Augusto","author",2
+234,60,"Borja Borja, Luis Felipe","advisor",1
+235,61,"Aldana Gallardo, Richard Patricio","author",1
+236,61,"Bustamante Chamorro, Nixon Paul","author",2
+237,61,"Morales Morales, Mario Raúl","advisor",1
+238,62,"Rivera Palma, Jason Hernán","author",1
+239,62,"Paredes Quintanilla, Miryam Elizabeth","advisor",1
+240,63,"Chalco Pillajo, Luis Eduardo","author",1
+241,63,"Bedón Chamorro, César Arturo","advisor",1
+242,64,"Chisiquinga Espinoza, Luis Jonathan","author",1
+243,64,"Chalacan Toaza, Byron Elias","author",2
+244,64,"Rosas Lara, Mauro Leonardo","advisor",1
+245,65,"Terán Morán, Edgar Wladimir","author",1
+246,65,"Vélez Macias, José Antonio","author",2
+247,65,"Morales Cardoso, Santiago Leonardo","advisor",1
+248,66,"Guerra Guachamín, Michelle Estefanía","author",1
+249,66,"Beltrán Morales, Jefferson Tarcisio","advisor",1
+250,67,"Vasco Carofilis, Roberto Andrés","author",1
+251,67,"Almagro Blanco, Pedro","advisor",1
+252,68,"Vélez Bravo, Andrés Enrique","author",1
+253,68,"Arroba Rimassa, Jorge Luciano","advisor",1
+254,69,"Rea Cayambe, Tania de Lourdes","author",1
+255,69,"Herrera Flores, Boris Enrique","advisor",1
+256,70,"Aimacaña Chuquimarca, Jefferson Paúl","author",1
+257,70,"Columba Guanoluisa, Alexander Ramiro","author",2
+258,70,"Mauro Leonardo Rosas Lara","advisor",1
+259,71,"Cáceres Baño, Cristian Andrés","author",1
+260,71,"Usamá Chaspuengal, Deisy Daniela","author",2
+261,71,"Mendoza Tello, Julio César","advisor",1
+262,72,"Anrango Perugachi, José Luis","author",1
+263,72,"Berrezueta Carmona, Hanmilton Jhoel","author",2
+264,72,"Morales Cardoso, Santiago Leonardo","advisor",1
+265,73,"Orbe Intriago, Carlos Adonis","author",1
+266,73,"Saavedra Mueses, Vicente David","author",2
+267,73,"Rosas Lara, Mauro Leonardo","advisor",1
+268,74,"Fernández Paucar, Guisela Maritza","author",1
+269,74,"Quinatoa Alomoto, Jessica Marisol","author",2
+270,74,"Borja Borja, Luis Felipe","advisor",1
+271,75,"Paucar Montes, Ian Hendry","author",1
+272,75,"Rosas Lara, Mauro Leonardo","advisor",1
+273,76,"Martínez Villacis, Paul Xavier","author",1
+274,76,"Rosas Lara, Mauro Leonardo","advisor",1
+275,77,"Villarreal Ponce, Martha Dayana","author",1
+276,77,"Silva Chiluisa, Jonathan Enrique","author",2
+277,77,"Rosas Lara, Mauro Leonardo","advisor",1
+278,78,"Puente López, Rodrigo Javier","author",1
+279,78,"Rosas Lara, Mauro Leonardo","advisor",1
+280,79,"Mediavilla Flores, Diana Katherine","author",1
+281,79,"Quishpe Guachalá, María José","author",2
+282,79,"Rosas Lara, Mauro Leonardo","advisor",1
+283,80,"Bautista Ulcuango, Alexis Enrique","author",1
+284,80,"Regalado Bolaños, Sonia Elizabeth","advisor",1
+285,81,"Panchi Panchi, Mónica Alexandra","author",1
+286,81,"Tipán Gordon, Tatiana Michelle","author",2
+287,81,"Rosas Lara, Mauro Leonardo","advisor",1
+288,82,"Román Rodríguez, Andrés Sebastián","author",1
+289,82,"Rosas Lara, Mauro Leonardo","advisor",1
+290,83,"Báez Camacho, Alexis Ariel","author",1
+291,83,"Izurieta Cabrera, Carlos Fabian","advisor",1
+292,84,"Lita Villegas, Erick Josué","author",1
+293,84,"Salazar Boada, Michael Sebastián","author",2
+294,84,"Morales Morales, Mario Raúl","advisor",1
+295,85,"Alemán Viteri, Sofía Belén","author",1
+296,85,"Pujota Cacuango, Cristian Fernando","author",2
+297,85,"Rosas Lara, Mauro Leonardo","advisor",1
+298,86,"Torres Montalván, Fausto Andrés","author",1
+299,86,"Rosas Lara, Mauro Leonardo","advisor",1
+300,87,"Villafuerte Maldonado, Marcia Yolanda","author",1
+301,87,"Goyes Mosquera, Jairo Javier","advisor",1
+302,88,"Reascos Yumbo, Leonardo David","author",1
+303,88,"Regalado Bolaños, Sonia Elizabeth","advisor",1
+304,89,"Robinson Casierra, Ray Ricardo","author",1
+305,89,"Herrera Flores, Boris Enrique","advisor",1
+306,90,"Játiva Bastidas, Juan José","author",1
+307,90,"Beltrán Morales, Jéfferson Tarcisio","advisor",1
+308,91,"Díaz Rueda, Jefferson Fernando","author",1
+309,91,"Sánchez Bastidas, Jimmy Rodrigo","author",2
+310,91,"Arroba Rimassa, Jorge Luciano","advisor",1
+311,92,"Constante Nicolalde, Fabián Vinicio","author",1
+312,92,"Morales Morales, Mario Raúl","advisor",1
+313,93,"Cubero Zurita, Jhonny Paul","author",1
+314,93,"Valle Bautista, Segundo Francisco","author",2
+315,93,"Arroba Rimassa, Jorge Luciano","advisor",1
+316,94,"Cuascota Cuascota, Edwin Geovanny","author",1
+317,94,"Mena Lucero, Jairo Israel","author",2
+318,94,"Arroba Rimassa, Jorge Luciano","advisor",1
+319,95,"López Olives, Diana Cristina","author",1
+320,95,"Robles Loján, Andrea Patricia","author",2
+321,95,"Rosas Lara, Mauro Leonardo","advisor",1
+322,96,"Cumbal Paucar, Sofía Belén","author",1
+323,96,"Rosero Pérez, Julián Alejandro","author",2
+324,96,"Rosas Lara, Mauro Leonardo","advisor",1
+325,97,"Montalvo Lima, Oscar David","author",1
+326,97,"Arroba Rimassa, Jorge Luciano","advisor",1
+327,98,"Reyes Mena, Harold Elías","author",1
+328,98,"Tualombo Aules, Leonel Alexander","author",2
+329,98,"Mendoza Tello, Julio César","advisor",1
+330,99,"Valencia Pilatuña, Eduardo Bladimir","author",1
+331,99,"Mendoza Tello, Julio César","advisor",1
+332,100,"Amangandi Panata, Anderson Jhoel","author",1
+333,100,"Ortiz Quishpe, Alex Mauricio","author",2
+334,100,"Herrera Flores, Boris Enrique","advisor",1
+335,101,"Baquero Zapata, Hugo Sebastián","author",1
+336,101,"Izurieta Cabrera, Carlos Fabián","advisor",1
+337,102,"Zaruma Alvarez, Wendy Vanessa","author",1
+338,102,"Tenecela Cabay, Paola Mishell","author",2
+339,102,"Morales Cardoso, Santiago Leonardo","advisor",1
+340,103,"Valle Toromoreno, Ricardo Patricio","author",1
+341,103,"Zúñiga Andino, Luis Ángel","author",2
+342,103,"Mendoza Tello, Julio César","advisor",1
+343,104,"Morales Yugsán, Vanessa Lizbeth","author",1
+344,104,"Quillupangui Pastillo, Silvia Carolina","author",2
+345,104,"Morales Morales, Mario Raúl","advisor",1
+346,105,"Montesdeoca Torres, Tatiana Elizabeth","author",1
+347,105,"Castillo Cabay, Luis Cornelio","advisor",1
+348,106,"Erazo Vaicilla, Doménica Nicole","author",1
+349,106,"Jara Enríquez, Samantha Milena","author",2
+350,106,"Beltrán Morales, Jefferson Tarcisio","advisor",1
+351,107,"Ortiz Pasuy, Marcos Israel","author",1
+352,107,"Santiago Leonardo, Morales Cardoso","advisor",1
+353,108,"Jiménez Cobo,  Juan Fernando","author",1
+354,108,"Andrade Correa, Kevin Joel","author",2
+355,108,"Morales Cardoso, Santiago Leonardo","advisor",1
+356,109,"Gordillo Moreno, Erick Fabricio","author",1
+357,109,"Arroba Rimassa, Jorge Luciano","advisor",1
