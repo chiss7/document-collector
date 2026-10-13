@@ -248,6 +248,21 @@ async def get_ai_publication_stats(session: Optional[AsyncSession] = None) -> AI
     return await _fetch_ai_stats(session)
 
 
+async def get_publications_count(session: Optional[AsyncSession] = None) -> int:
+    """Return total count of publications (excluding classified ones if needed)."""
+    own = session is None
+    if own:
+        async with AsyncSessionLocal() as session:
+            return await _fetch_publications_count(session)
+    return await _fetch_publications_count(session)
+
+
+async def _fetch_publications_count(session: AsyncSession) -> int:
+    total_q = select(func.count(Publication.id))
+    total = await session.scalar(total_q) or 0
+    return total
+
+
 async def _fetch_ai_stats(session: AsyncSession) -> AIPublicationStatsResponse:
     total_q = select(func.count(Publication.id))
     journal_q = select(func.count(Publication.id)).where(Publication.entity_type == "JournalArticle")
