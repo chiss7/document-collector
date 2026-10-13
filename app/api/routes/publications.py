@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request, Form, File, UploadFile, HTTPExc
 from typing import Optional
 import json
 
-from app.services.publication_service import get_all_publications, create_publication, update_publication, delete_publication, get_filter_options, get_ai_publication_stats
+from app.services.publication_service import get_all_publications, create_publication, update_publication, delete_publication, get_filter_options, get_ai_publication_stats, get_publications_count
 from app.core.security import get_current_user
 from app.schemas.publication import PublicationDTO, PublicationCreateDTO, PublicationUpdateDTO, FilterOptionsResponse, AIPublicationStatsResponse
 from app.schemas.publication_query import PublicationQuery
@@ -21,6 +21,12 @@ async def list_filter_options():
 @router.get("/ai-stats", response_model=AIPublicationStatsResponse)
 async def list_ai_publication_stats():
     return await get_ai_publication_stats()
+
+
+@router.get("/count")
+async def get_publications_count_endpoint():
+    count = await get_publications_count()
+    return {"count": count}
 
 
 @router.get("")
